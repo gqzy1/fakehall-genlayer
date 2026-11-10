@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FakeHall 真假馆 — Provenance Lab · GenLayer Studionet</title>
+<meta name="description" content="Multi-validator public-source forensics & forgery game on GenLayer Stable Studionet (61999). Two exhibits, one forgery, consensus decides.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,600&family=Plus+Jakarta+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">FakeHall 真假馆 <small id="appSub">多验证者公开文献核查与赝品鉴别博弈</small></div>
+  <div class="spacer"></div>
+  <nav>
+    <button data-nav="workbench">文物勘验台</button>
+    <button data-nav="gallery">已揭晓赝品画廊</button>
+    <button data-nav="leaderboards">双排行榜</button>
+    <button data-nav="evidence">评审员证据核验页</button>
+  </nav>
+  <button id="studioBtn">+ 创建造假回合</button>
+  <button id="langBtn">EN</button>
+  <button id="motionBtn">动效: 开启</button>
+  <span class="net">● STUDIONET 61999</span>
+</header>
+<div class="wrap">
+  <!-- Cold-start: this banner and every verdict/score below show only
+       unconfirmed text until a latest-final get_* readback returns.
+       No success badge and no payout number exists in this static HTML. -->
+  <div class="banner" id="banner"><span class="grow">预览种子 · 未在链上确认 / PREVIEW SEED · Unconfirmed On-Chain</span></div>
+  <div class="walletbar" id="walletBar"><span>未连接钱包 — 只读模式</span></div>
+  <div class="roundtabs" id="roundTabs"></div>
+  <main id="view">
+    <div class="panel">
+      <h2 id="appTitle">FakeHall 真假馆</h2>
+      <p class="muted">正在读取链上状态… / Reading on-chain state…</p>
+      <p>未确认 / UNCONFIRMED — <span>等待链上 FINALIZED 读回</span></p>
+    </div>
+  </main>
+</div>
+<footer class="site"><div class="wrap" id="footerLine">Contract — awaiting deployment.json · Studionet 61999</div></footer>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
