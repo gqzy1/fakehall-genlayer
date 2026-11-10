@@ -109,7 +109,14 @@ function renderChrome() {
     b.textContent = t('nav.' + b.dataset.nav);
   });
   $('#studioBtn').textContent = t('nav.forger_studio');
-  $('#appTitle').textContent = t('app.title');
+  // #appTitle lives inside #view in index.html, and renderAll() replaces
+  // #view's innerHTML on the first render — after that the element no longer
+  // exists. An unguarded assignment here threw on EVERY render after the
+  // first, freezing the app in preview mode (dead round tabs, dead temp
+  // button, footer never showing the contract). Guard it: the title is a
+  // static first-paint label; the CASE heading takes over after render.
+  const appTitleEl = $('#appTitle');
+  if (appTitleEl) appTitleEl.textContent = t('app.title');
   $('#appSub').textContent = t('app.subtitle');
   // Round tabs
   $('#roundTabs').innerHTML = SEEDS.map((s) => {
@@ -124,7 +131,11 @@ function renderChrome() {
   const banner = $('#banner');
   if (!state.deployment) {
     banner.className = 'banner';
-    banner.innerHTML = `<span class="grow">⏳ ${esc(t('status.PREVIEW_SEED'))} — deployment.json</span>`;
+    // Retry affordance: a transient deployment.json fetch failure (e.g. a
+    // Pages 503) used to brick the app with no recovery except a manual
+    // reload. The button re-runs boot(), which re-fetches deployment.json
+    // and continues to the readbacks.
+    banner.innerHTML = `<span class="grow">⏳ ${esc(t('status.PREVIEW_SEED'))} — deployment.json</span><button id="retryDeployBtn">${esc(t('ui.refresh'))}</button>`;
   } else if (!state.readbackOk) {
     banner.className = 'banner';
     banner.innerHTML = `<span class="grow">${esc(t('status.PREVIEW_SEED'))} · ${esc(t('status.UNCONFIRMED'))}</span><button id="refreshBtn">${esc(t('ui.refresh'))}</button>`;
@@ -134,6 +145,8 @@ function renderChrome() {
   }
   const rb = $('#refreshBtn');
   if (rb) rb.onclick = () => refreshLive();
+  const rd = $('#retryDeployBtn');
+  if (rd) rd.onclick = () => { if (state._booting) return; state._booting = true; boot().finally(() => { state._booting = false; }); };
   // Wallet bar
   const wb = $('#walletBar');
   const w = state.wallet;
