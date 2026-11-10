@@ -71,6 +71,8 @@ seed-commitment-hash check for all 9 rounds). Lint:
 | 8 Rosetta, dead link | VOID | NONE | REVEALED | VOID_ARCHIVED | 0 | 0 | 0 |
 | 9 Rosetta, cancel | — | — | CANCELLED | — | 0 | — | — |
 
+> **Amendment (2026-11-11, independent verification — R5 source quote):** the live R5 `source_quote` read back from the chain is "Present locationGrand Egyptian Museum" (infobox label + value concatenated by tag-stripping, note the missing space), not the pre-registered Tut sentence in EXPECTED.md ("On 28 October 1925, they opened the innermost of three coffins to reveal the gold mask"). The pre-registration is kept as-is. The verdict stands: the live quote satisfies the strict-substring rule (it passed the on-chain check) and contradicts item B's Pergamon/Berlin provenance claim.
+
 Leaderboards (live): D1 300 points, 3 correct / 3 valid, accuracy
 10000 bps; D2 0 points, 0/3, 0 bps. Forger 300 points, 3 fooled /
 8 challenged, deception 3750 bps, 4 revealed rounds. Gallery:

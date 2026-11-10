@@ -1,6 +1,9 @@
-// GENERATED from ~/workspace/build-fakehall/seeds.json (do not hand-edit).
+// GENERATED from seeds.json by scripts/generate_seeds_js.mjs (do not hand-edit).
+// Canonical source: ~/workspace/build-fakehall/seeds.json; repo-bundled copy:
+// tests/seeds.json (byte-identical). SAME_AS_* references resolved per
+// scripts/run_evidence.mjs resolveItems.
 // Preview seeds only: shown with a PREVIEW SEED / UNCONFIRMED badge until a
-// latest-final get_* readback replaces them. SAME_AS_* references resolved.
+// latest-final get_* readback replaces them.
 export const SEEDS = [
  {
   "backup_source_url": "https://www.britishmuseum.org/collection/object/Y_EA24",
@@ -156,11 +159,11 @@ export const SEEDS = [
   "expected_reveal_mode": "FORGER_VERIFIED",
   "expected_verdict": "FAKE_A",
   "item_a": {
-   "claimed_date": "Early 7th century CE (c. 625 CE, Anglo-Saxon period)",
+   "claimed_date": "c. 1066 CE (Late Norman Conquest period, reign of William I)",
    "claimed_material": "Iron cap, neck guard, cheek pieces, and face mask covered with tinned copper-alloy panels, decorated with animal interlace and eyebrows inlaid with silver wire and garnets",
    "claimed_provenance": "Excavated in 1939 by self-taught archaeologist Basil Brown from the Mound 1 ship-burial at Sutton Hoo, Suffolk, England; held at the British Museum.",
    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Sutton_Hoo_helmet_2016.png/960px-Sutton_Hoo_helmet_2016.png",
-   "narrative": "An Anglo-Saxon parade helmet of iron, its cap, neck guard, cheek pieces and face mask covered with tinned copper-alloy panels decorated with animal interlace, eyebrows inlaid with silver wire and garnets. Made in the early 7th century CE, c. 625 CE, and excavated in 1939 by self-taught archaeologist Basil Brown from the Mound 1 ship-burial at Sutton Hoo, Suffolk, England; held at the British Museum.",
+   "narrative": "An Anglo-Saxon parade helmet of iron, its cap, neck guard, cheek pieces and face mask covered with tinned copper-alloy panels decorated with animal interlace, eyebrows inlaid with silver wire and garnets. Made c. 1066 CE in the reign of William I after the Norman Conquest, and excavated in 1939 by Basil Brown from the Mound 1 ship-burial at Sutton Hoo, Suffolk; held at the British Museum.",
    "title": "The Sutton Hoo Princely Helmet"
   },
   "item_b": {
@@ -255,9 +258,9 @@ export const SEEDS = [
   "item_a": {
    "claimed_date": "196 BCE (Ptolemaic Period, reign of Ptolemy V Epiphanes)",
    "claimed_material": "Granodiorite stele inscribed with three scripts: Ancient Egyptian hieroglyphs, Demotic script, and Ancient Greek; height 112.3 cm, weight approx. 760 kg",
-   "claimed_provenance": "Excavated in October 1822 by Jean-François Champollion inside the Great Hypostyle Hall at Karnak Temple, Luxor; donated to the Louvre Museum in 1824 before loan to London.",
+   "claimed_provenance": "Rediscovered on 15 July 1799 by French soldier Pierre-François Bouchard during the Napoleonic campaign in Rashid (Rosetta), Egypt; transferred to the British Museum in 1802 under registration number EA 24.",
    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Rosetta_Stone.JPG/960px-Rosetta_Stone.JPG",
-   "narrative": "A granodiorite stele carrying a decree issued at Memphis in 196 BCE under Ptolemy V Epiphanes, inscribed in hieroglyphs, Demotic and Ancient Greek. Jean-François Champollion excavated it in October 1822 inside the Great Hypostyle Hall at Karnak Temple, Luxor; it was donated to the Louvre Museum in 1824 before being loaned to London.",
+   "narrative": "A granodiorite stele carrying a decree issued at Memphis in 196 BCE under Ptolemy V Epiphanes, inscribed in hieroglyphs, Demotic and Ancient Greek. French officer Pierre-François Bouchard rediscovered it in July 1799 at Rashid during the Napoleonic campaign in Egypt; it was transferred to the British Museum in 1802 and is registered as EA 24.",
    "title": "The Rosetta Stone (Memphis Decree Stele)"
   },
   "item_b": {
@@ -303,9 +306,9 @@ export const SEEDS = [
   "item_a": {
    "claimed_date": "196 BCE (Ptolemaic Period, reign of Ptolemy V Epiphanes)",
    "claimed_material": "Granodiorite stele inscribed with three scripts: Ancient Egyptian hieroglyphs, Demotic script, and Ancient Greek; height 112.3 cm, weight approx. 760 kg",
-   "claimed_provenance": "Excavated in October 1822 by Jean-François Champollion inside the Great Hypostyle Hall at Karnak Temple, Luxor; donated to the Louvre Museum in 1824 before loan to London.",
+   "claimed_provenance": "Rediscovered on 15 July 1799 by French soldier Pierre-François Bouchard during the Napoleonic campaign in Rashid (Rosetta), Egypt; transferred to the British Museum in 1802 under registration number EA 24.",
    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Rosetta_Stone.JPG/960px-Rosetta_Stone.JPG",
-   "narrative": "A granodiorite stele carrying a decree issued at Memphis in 196 BCE under Ptolemy V Epiphanes, inscribed in hieroglyphs, Demotic and Ancient Greek. Jean-François Champollion excavated it in October 1822 inside the Great Hypostyle Hall at Karnak Temple, Luxor; it was donated to the Louvre Museum in 1824 before being loaned to London.",
+   "narrative": "A granodiorite stele carrying a decree issued at Memphis in 196 BCE under Ptolemy V Epiphanes, inscribed in hieroglyphs, Demotic and Ancient Greek. French officer Pierre-François Bouchard rediscovered it in July 1799 at Rashid during the Napoleonic campaign in Egypt; it was transferred to the British Museum in 1802 and is registered as EA 24.",
    "title": "The Rosetta Stone (Memphis Decree Stele)"
   },
   "item_b": {
@@ -351,9 +354,9 @@ export const SEEDS = [
   "item_a": {
    "claimed_date": "196 BCE (Ptolemaic Period, reign of Ptolemy V Epiphanes)",
    "claimed_material": "Granodiorite stele inscribed with three scripts: Ancient Egyptian hieroglyphs, Demotic script, and Ancient Greek; height 112.3 cm, weight approx. 760 kg",
-   "claimed_provenance": "Excavated in October 1822 by Jean-François Champollion inside the Great Hypostyle Hall at Karnak Temple, Luxor; donated to the Louvre Museum in 1824 before loan to London.",
+   "claimed_provenance": "Rediscovered on 15 July 1799 by French soldier Pierre-François Bouchard during the Napoleonic campaign in Rashid (Rosetta), Egypt; transferred to the British Museum in 1802 under registration number EA 24.",
    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Rosetta_Stone.JPG/960px-Rosetta_Stone.JPG",
-   "narrative": "A granodiorite stele carrying a decree issued at Memphis in 196 BCE under Ptolemy V Epiphanes, inscribed in hieroglyphs, Demotic and Ancient Greek. Jean-François Champollion excavated it in October 1822 inside the Great Hypostyle Hall at Karnak Temple, Luxor; it was donated to the Louvre Museum in 1824 before being loaned to London.",
+   "narrative": "A granodiorite stele carrying a decree issued at Memphis in 196 BCE under Ptolemy V Epiphanes, inscribed in hieroglyphs, Demotic and Ancient Greek. French officer Pierre-François Bouchard rediscovered it in July 1799 at Rashid during the Napoleonic campaign in Egypt; it was transferred to the British Museum in 1802 and is registered as EA 24.",
    "title": "The Rosetta Stone (Memphis Decree Stele)"
   },
   "item_b": {
@@ -398,9 +401,9 @@ export const SEEDS = [
   "item_a": {
    "claimed_date": "196 BCE (Ptolemaic Period, reign of Ptolemy V Epiphanes)",
    "claimed_material": "Granodiorite stele inscribed with three scripts: Ancient Egyptian hieroglyphs, Demotic script, and Ancient Greek; height 112.3 cm, weight approx. 760 kg",
-   "claimed_provenance": "Excavated in October 1822 by Jean-François Champollion inside the Great Hypostyle Hall at Karnak Temple, Luxor; donated to the Louvre Museum in 1824 before loan to London.",
+   "claimed_provenance": "Rediscovered on 15 July 1799 by French soldier Pierre-François Bouchard during the Napoleonic campaign in Rashid (Rosetta), Egypt; transferred to the British Museum in 1802 under registration number EA 24.",
    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Rosetta_Stone.JPG/960px-Rosetta_Stone.JPG",
-   "narrative": "A granodiorite stele carrying a decree issued at Memphis in 196 BCE under Ptolemy V Epiphanes, inscribed in hieroglyphs, Demotic and Ancient Greek. Jean-François Champollion excavated it in October 1822 inside the Great Hypostyle Hall at Karnak Temple, Luxor; it was donated to the Louvre Museum in 1824 before being loaned to London.",
+   "narrative": "A granodiorite stele carrying a decree issued at Memphis in 196 BCE under Ptolemy V Epiphanes, inscribed in hieroglyphs, Demotic and Ancient Greek. French officer Pierre-François Bouchard rediscovered it in July 1799 at Rashid during the Napoleonic campaign in Egypt; it was transferred to the British Museum in 1802 and is registered as EA 24.",
    "title": "The Rosetta Stone (Memphis Decree Stele)"
   },
   "item_b": {

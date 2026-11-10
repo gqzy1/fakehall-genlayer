@@ -357,8 +357,7 @@ class Tests(unittest.TestCase):
     def test_seed_commitment_hashes(self):
         seeds_path = os.environ.get(
             'FAKEHALL_SEEDS',
-            os.path.join(os.path.dirname(__file__), '..', '..', '..', '..',
-                         'build-fakehall', 'seeds.json'))
+            os.path.join(os.path.dirname(__file__), 'seeds.json'))
         with open(seeds_path, encoding='utf-8') as f:
             seeds = json.load(f)
         by_id = {}

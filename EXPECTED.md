@@ -52,6 +52,8 @@ Confirmed verbatim quotes (probe-verified on-chain):
 - R2 / R4 (Sutton Hoo date): "It was thought to be buried around the years c. 620–625 AD" (en dash U+2013)
 - R3 / R5 (Tutankhamun provenance): "On 28 October 1925, they opened the innermost of three coffins to reveal the gold mask"
 
+> **Amendment (2026-11-11, independent verification):** the live R5 `source_quote` read back from the chain is "Present locationGrand Egyptian Museum" (an infobox label + value concatenated by tag-stripping, note the missing space) — not the pre-registered Tut sentence above. The pre-registered quote is kept as-is and is not edited to match the actual. The verdict stands: the live quote still satisfies the strict-substring rule (it passed the on-chain check) and it contradicts item B's Pergamon/Berlin provenance claim. R1 and R4 live quotes match their pre-registered sentences exactly; R3 is VOID with an empty quote as expected.
+
 ## Expected per-round results
 
 Votes in every round: D1 votes the expected fake, D2 votes the other
