@@ -31,6 +31,8 @@ const state = {
   liveGallery: null,
   readbackOk: false,
   readbackError: null,
+  reading: false,      // true while a latest-final readback is in flight (R2: visible "reading…" state)
+  creating: false,     // true while doCreate is submitting (R2: button disabled + 提交中…)
   wallet: null,          // {mode:'injected'|'temporary', address, client, signer_mode}
   chainId: null,
   tx: null,              // {method, roundId, hash, phase, attempts, error}
@@ -79,6 +81,11 @@ async function boot() {
   }
   try { state.version = await (await fetch('./version.json', { cache: 'no-store' })).json(); } catch { /* optional */ }
   // Sequential paced readbacks (Studio RPC limit 30 req/min: >=3s apart).
+  // R2: mark the readback in flight so the banner shows a visible "reading…"
+  // state instead of looking dead for the 1–2 minutes a FINALIZED readback
+  // can take; the refresh button is disabled while reading.
+  state.reading = true;
+  renderAll();
   try {
     const all = await readAllRounds();
     state.liveRounds = all.rounds;
@@ -94,6 +101,9 @@ async function boot() {
     renderAll();
   } catch (e) {
     state.readbackError = String(e?.shortMessage || e?.message || e);
+    renderAll();
+  } finally {
+    state.reading = false;
     renderAll();
   }
   try { state.chainId = await injectedChainId(); } catch { /* no wallet */ }
@@ -119,10 +129,24 @@ function renderChrome() {
   if (appTitleEl) appTitleEl.textContent = t('app.title');
   $('#appSub').textContent = t('app.subtitle');
   // Round tabs
-  $('#roundTabs').innerHTML = SEEDS.map((s) => {
-    const live = liveRound(s.round_id);
-    const st = live ? live.status : s.expected_final_status + '*';
-    return `<button data-round="${s.round_id}" class="${state.roundId === s.round_id ? 'active' : ''}">#${String(s.round_id).padStart(2, '0')} <span class="st">${esc(st)}</span></button>`;
+  // R2: tabs list every round known on-chain, not just the 9 seeds — a round
+  // created in the browser (e.g. harness round 10, or any user-created round)
+  // must stay reachable after a reload. Live rounds come from the FINALIZED
+  // readback; seeds without live data keep their expected status + '*'.
+  // Before any readback, tabs are seeds only (no live data to union yet).
+  const tabSeeds = state.liveRounds
+    ? [...state.liveRounds.map((r) => ({ round_id: r.round_id, status: r.status, live: true }))]
+    : [];
+  const tabList = state.liveRounds
+    ? [...tabSeeds, ...SEEDS.filter((s) => !tabSeeds.some((x) => x.round_id === s.round_id))
+        .map((s) => ({ round_id: s.round_id, status: s.expected_final_status + '*', live: false }))]
+        .sort((a, b) => a.round_id - b.round_id)
+    : SEEDS.map((s) => ({ round_id: s.round_id, status: s.expected_final_status + '*', live: false }));
+  // Guard: never render a round id with neither live data nor a seed (the
+  // workbench would throw on undefined item fields). Clamp to the demo round.
+  if (!liveRound(state.roundId) && !previewRound(state.roundId)) state.roundId = 2;
+  $('#roundTabs').innerHTML = tabList.map((t) => {
+    return `<button data-round="${t.round_id}" class="${state.roundId === t.round_id ? 'active' : ''}">#${String(t.round_id).padStart(2, '0')} <span class="st">${esc(t.status)}</span></button>`;
   }).join('');
   document.querySelectorAll('#roundTabs button').forEach((b) => {
     b.onclick = () => { state.roundId = Number(b.dataset.round); state.tx = null; renderAll(); };
@@ -138,7 +162,15 @@ function renderChrome() {
     banner.innerHTML = `<span class="grow">⏳ ${esc(t('status.PREVIEW_SEED'))} — deployment.json</span><button id="retryDeployBtn">${esc(t('ui.refresh'))}</button>`;
   } else if (!state.readbackOk) {
     banner.className = 'banner';
-    banner.innerHTML = `<span class="grow">${esc(t('status.PREVIEW_SEED'))} · ${esc(t('status.UNCONFIRMED'))}</span><button id="refreshBtn">${esc(t('ui.refresh'))}</button>`;
+    // R2: while a readback is in flight show an explicit "reading…" state
+    // (a FINALIZED readback can take 1–2 minutes and the page looked dead);
+    // once it fails, show the error text instead of failing silently.
+    const readingTxt = state.reading
+      ? `⏳ ${esc(t('ui.reading_state'))}`
+      : `${esc(t('status.PREVIEW_SEED'))} · ${esc(t('status.UNCONFIRMED'))}`;
+    const errTxt = (!state.reading && state.readbackError)
+      ? ` <span class="small">⚠ ${esc(state.readbackError.slice(0, 160))}</span>` : '';
+    banner.innerHTML = `<span class="grow">${readingTxt}${errTxt}</span><button id="refreshBtn" ${state.reading ? 'disabled' : ''}>${esc(t('ui.refresh'))}</button>`;
   } else {
     banner.className = 'banner ok';
     banner.innerHTML = `<span class="grow">✓ ${esc(t('ui.readback_ok'))} — get_all_rounds / get_leaderboards / get_revealed_gallery (latest-final)</span><button id="refreshBtn">${esc(t('ui.refresh'))}</button>`;
@@ -176,6 +208,9 @@ function renderChrome() {
 }
 
 async function refreshLive() {
+  // R2: same visible "reading…" state as boot (see banner branch above).
+  state.reading = true;
+  renderAll();
   try {
     const all = await readAllRounds();
     state.liveRounds = all.rounds;
@@ -187,6 +222,8 @@ async function refreshLive() {
     state.liveGallery = (await readGallery()).gallery;
   } catch (e) {
     state.readbackError = String(e?.shortMessage || e?.message || e);
+  } finally {
+    state.reading = false;
   }
   renderAll();
 }
@@ -404,6 +441,9 @@ function txPipelineHtml() {
   }
   if (tx.error && tx.error !== 'FAIL_CLOSED') {
     extra = `<div class="notice err">${esc(tx.error)}</div>`;
+    // R2: a failure BEFORE broadcast (no tx hash yet) gets a visible retry
+    // button; after broadcast the resume-hash control below is the retry.
+    if (!tx.hash) extra += `<p><button id="retryWriteBtn" class="amber">${esc(t('ui.retry_write'))}</button></p>`;
   }
   return `<div class="panel"><h3>${esc(t('ui.close_steps'))} — ${esc(tx.method)} (attempt ${tx.attempts})</h3>
     <ul class="pipeline">${lis}</ul>
@@ -548,6 +588,7 @@ function bindViewActions() {
   on('#suppBtn', doSupplement);
   on('#exportBtn', doExport);
   on('#retryCloseBtn', () => doClose(state.roundId, true));
+  on('#retryWriteBtn', () => { const r = state.tx?.retry; if (r) r(); });
   on('#resumeBtn', doResume);
   on('#restoreSaltBtn', restoreSalt);
   on('#evHuman', () => { state.evidenceView = 'human'; renderAll(); });
@@ -566,12 +607,15 @@ async function updateRevealHashCheck() {
   if (!el || !saltEl || !choiceEl) return;
   const r = roundData(state.roundId);
   const salt = saltEl.value.trim();
-  if (!salt) { el.textContent = ''; return; }
+  const btn = $('#revealBtn');
+  // R2: with no salt the reveal button must be disabled (it used to stay
+  // enabled and doReveal() silently returned — a dead button, same class
+  // of failure as the create flow).
+  if (!salt) { el.textContent = ''; if (btn) btn.disabled = true; return; }
   const h = await sha256Hex(`${state.roundId}:${choiceEl.value}:${salt}`);
   const ok = h === (r.commitment_hash || '').toLowerCase();
   el.innerHTML = `on-chain: <span class="hash">${esc(r.commitment_hash || '')}</span><br>computed: <span class="hash">${esc(h)}</span> — ${ok ? esc(t('ui.salt_match')) : esc(t('ui.salt_mismatch'))}`;
   el.style.color = ok ? 'var(--accent-provenance)' : 'var(--verdict-fake)';
-  const btn = $('#revealBtn');
   if (btn) btn.disabled = !ok;
 }
 function restoreSalt() {
@@ -599,7 +643,13 @@ function rememberSalt(roundId, choice, salt) {
 async function runWrite(method, args, roundId, { after } = {}) {
   const w = state.wallet;
   if (!w) { alert(t('ui.no_wallet')); return; }
-  state.tx = { method, roundId, hash: null, phase: 0, attempts: (state.tx?.method === method && state.tx?.roundId === roundId ? state.tx.attempts + 1 : 1), error: null };
+  state.tx = { method, roundId, hash: null, phase: 0, attempts: (state.tx?.method === method && state.tx?.roundId === roundId ? state.tx.attempts + 1 : 1), error: null,
+    // R2: pre-broadcast failures are retryable by re-sending the same call.
+    // The retry closure is stored on the tx record (never re-created by the
+    // render path); when a hash already exists the retry button is NOT
+    // shown — a broadcast tx is resumed via the resume-hash control instead,
+    // so a retry can never double-send.
+    retry: () => runWrite(method, args, roundId, { after }) };
   renderAll();
   try {
     const hash = await w.client.writeContract({ address: contractAddress(), functionName: method, args, value: 0n, leaderOnly: false });
@@ -625,12 +675,20 @@ async function runWrite(method, args, roundId, { after } = {}) {
   }
 }
 
+// R2: pre-write validation failures in the workbench are shown in the
+// same pipeline panel as write errors (visible text, never a native alert
+// and never a silent return — the create flow failed exactly that way).
+function writeError(method, roundId, msg) {
+  state.tx = { method, roundId, hash: null, phase: 0, attempts: 1, error: msg, retry: null };
+  renderAll();
+}
+
 async function doVote() {
   const choice = document.querySelector('input[name="voteChoice"]:checked')?.value;
-  if (!choice) { alert('Pick FAKE_A or FAKE_B first.'); return; }
+  if (!choice) { writeError('submit_investigation', state.roundId, 'Pick FAKE_A or FAKE_B first. / 请先选择 FAKE_A 或 FAKE_B。'); return; }
   const flaw = $('#voteFlaw')?.value || 'DATE_MISMATCH';
   const note = $('#voteNote')?.value || '';
-  if (note.length < 1) { alert('A one-line investigation note is required (1–280 chars).'); return; }
+  if (note.length < 1) { writeError('submit_investigation', state.roundId, 'A one-line investigation note is required (1–280 chars). / 需要填写一行调查笔记（1–280 字）。'); return; }
   await runWrite('submit_investigation', [state.roundId, choice, flaw, note], state.roundId);
 }
 async function doClose(roundId, isRetry = false) {
@@ -643,13 +701,13 @@ async function doReveal() {
   const choice = $('#revealChoice')?.value;
   const salt = $('#revealSalt')?.value.trim();
   const confession = $('#revealConfession')?.value || '';
-  if (!salt) return;
+  if (!salt) { writeError('reveal_forgery', state.roundId, 'Salt is required to reveal. / 揭晓需要输入盐值。'); return; }
   await runWrite('reveal_forgery', [state.roundId, choice, salt, confession], state.roundId);
 }
 async function doSupplement() {
   const choice = $('#suppChoice')?.value;
   const salt = $('#suppSalt')?.value.trim();
-  if (!salt) return;
+  if (!salt) { writeError('supplement_forger_reveal', state.roundId, 'Salt is required to supplement. / 补验需要输入盐值。'); return; }
   await runWrite('supplement_forger_reveal', [state.roundId, choice, salt], state.roundId);
 }
 async function doSimple(method, args) {
@@ -735,6 +793,7 @@ function studioHtml() {
     <p><button id="fGenSalt">${esc(t('ui.salt_random'))}</button> <button id="fDlSalt">${esc(t('ui.salt_download'))}</button></p>
     <p class="hash" id="fHashPreview">SHA-256: —</p>
     <div class="notice">${esc(t('ui.create_hint'))}</div>
+    <p id="fCreateError" class="notice err" hidden></p>
     <p><button id="fCreate" class="primary">create_round — 提交创建新回合上链 / Submit create_round</button></p>
     <p class="small muted">create_round(theme, item_a_json, item_b_json, source_url, backup_source_url, commitment_hash, max_detectives)</p>
   </div>`;
@@ -756,6 +815,14 @@ function bindDrawerActions() {
   const drawer = $('#studioDrawer');
   if (!drawer) return;
   $('#studioClose').onclick = () => { drawer.hidden = true; };
+  // R2: the create button reflects state.creating (disabled + 提交中…) so
+  // the 1–2 minute pre-write re-read no longer looks dead; bindDrawerActions
+  // runs on every renderAll, so the state survives re-renders.
+  const cb = $('#fCreate');
+  if (cb) {
+    cb.disabled = !!state.creating;
+    cb.textContent = state.creating ? t('ui.submitting') : 'create_round — 提交创建新回合上链 / Submit create_round';
+  }
   $('#fGenSalt').onclick = () => {
     const bytes = new Uint8Array(12);
     crypto.getRandomValues(bytes);
@@ -787,44 +854,86 @@ async function updateStudioHash() {
   el.textContent = `SHA-256(${nextRoundId()}:${choice}:salt): ${h}`;
 }
 function normKey(s) { return String(s || '').trim().replace(/\s+/g, ' ').toLowerCase(); }
+// R2: create failures are shown INLINE in the drawer (never a native
+// alert — the 04:15 re-check proved an alert leaves the user with a
+// dead-looking dialog and no record of what failed). Every failure names
+// the exact field; any unexpected throw is caught and shown the same way.
+function showCreateError(lines) {
+  const el = $('#fCreateError');
+  const msg = Array.isArray(lines) ? lines : [String(lines)];
+  if (!el) { alert(msg.join('\n')); return; }
+  el.innerHTML = msg.map((m) => esc(m)).join('<br>');
+  el.hidden = false;
+  el.scrollIntoView?.({ block: 'nearest' });
+}
+function clearCreateError() {
+  const el = $('#fCreateError');
+  if (el) { el.hidden = true; el.textContent = ''; }
+}
+function validateItem(side, it) {
+  const sideLabel = side === 'A' ? t('ui.exhibit_a') : t('ui.exhibit_b');
+  const len = (a, b) => t('ui.val_chars').replace('{a}', String(a)).replace('{b}', String(b));
+  const problems = [];
+  const check = (label, ok, detail) => { if (!ok) problems.push(`${sideLabel} · ${label}: ${detail}`); };
+  check('Title', it.title.length >= 3 && it.title.length <= 120, len(3, 120));
+  check(t('ui.image_url'), it.image_url.startsWith('https://') && it.image_url.length <= 300, `${t('ui.val_https')} (≤300)`);
+  check(t('compare.dim_date'), it.claimed_date.length >= 2 && it.claimed_date.length <= 80, len(2, 80));
+  check(t('compare.dim_material'), it.claimed_material.length >= 5 && it.claimed_material.length <= 200, len(5, 200));
+  check(t('compare.dim_provenance'), it.claimed_provenance.length >= 20 && it.claimed_provenance.length <= 500, len(20, 500));
+  check(t('compare.dim_narrative'), it.narrative.length >= 20 && it.narrative.length <= 600, len(20, 600));
+  return problems;
+}
 async function doCreate() {
+  clearCreateError();
   const w = state.wallet;
-  if (!w) { alert(t('ui.no_wallet')); return; }
-  const item = (p) => ({
-    title: document.getElementById('f' + p + 'Title').value.trim(),
-    image_url: document.getElementById('f' + p + 'Img').value.trim(),
-    claimed_date: document.getElementById('f' + p + 'Date').value.trim(),
-    claimed_material: document.getElementById('f' + p + 'Mat').value.trim(),
-    claimed_provenance: document.getElementById('f' + p + 'Prov').value.trim(),
-    narrative: document.getElementById('f' + p + 'Narr').value.trim(),
-  });
-  const a = item('A'), b = item('B');
-  const bad = (it) => !(it.title.length >= 3 && it.title.length <= 120 && it.image_url.startsWith('https://') && it.image_url.length <= 300
-    && it.claimed_date.length >= 2 && it.claimed_date.length <= 80 && it.claimed_material.length >= 5 && it.claimed_material.length <= 200
-    && it.claimed_provenance.length >= 20 && it.claimed_provenance.length <= 500 && it.narrative.length >= 20 && it.narrative.length <= 600);
-  if (bad(a) || bad(b)) { alert('Check item field lengths / HTTPS image URLs (see contract bounds).'); return; }
-  const keyA = [a.claimed_date, a.claimed_material, a.claimed_provenance, a.narrative].map(normKey).join('|');
-  const keyB = [b.claimed_date, b.claimed_material, b.claimed_provenance, b.narrative].map(normKey).join('|');
-  if (keyA === keyB) { alert('ITEMS_IDENTICAL_NO_LLM_NEEDED — A and B must differ in at least one dimension.'); return; }
-  const theme = $('#fTheme').value.trim();
-  const src = $('#fSrc').value.trim();
-  const backup = $('#fBackup').value.trim() || src;
-  const maxDet = Math.min(10, Math.max(1, Number($('#fMax').value) || 3));
-  const choice = document.querySelector('input[name="fakeChoice"]:checked')?.value || 'FAKE_B';
-  const salt = $('#fSalt').value.trim();
-  if (!theme || !src.startsWith('https://') || !salt) { alert('Theme, HTTPS source URL and salt are required.'); return; }
-  // Re-read live rounds at submit time so the commitment uses the true next id.
-  let rid = nextRoundId();
-  try { const all = await readAllRounds(); if (all.rounds?.length) rid = Math.max(...all.rounds.map((r) => r.round_id)) + 1; } catch { /* keep estimate */ }
-  const hash = await sha256Hex(`${rid}:${choice}:${salt}`);
-  rememberSalt(rid, choice, salt);
-  $('#studioDrawer').hidden = true;
-  state.view = 'workbench';
-  await runWrite('create_round', [theme, JSON.stringify(a), JSON.stringify(b), src, backup, hash, maxDet], rid, {
-    after: () => { state.roundId = rid; },
-  });
-  state.roundId = rid;
-  renderAll();
+  if (!w) { showCreateError(t('ui.no_wallet')); return; }
+  if (state.creating) return; // double-click guard: one submission at a time
+  try {
+    const item = (p) => ({
+      title: document.getElementById('f' + p + 'Title').value.trim(),
+      image_url: document.getElementById('f' + p + 'Img').value.trim(),
+      claimed_date: document.getElementById('f' + p + 'Date').value.trim(),
+      claimed_material: document.getElementById('f' + p + 'Mat').value.trim(),
+      claimed_provenance: document.getElementById('f' + p + 'Prov').value.trim(),
+      narrative: document.getElementById('f' + p + 'Narr').value.trim(),
+    });
+    const a = item('A'), b = item('B');
+    const problems = [...validateItem('A', a), ...validateItem('B', b)];
+    if (problems.length) { showCreateError([t('ui.create_error_title'), ...problems]); return; }
+    const keyA = [a.claimed_date, a.claimed_material, a.claimed_provenance, a.narrative].map(normKey).join('|');
+    const keyB = [b.claimed_date, b.claimed_material, b.claimed_provenance, b.narrative].map(normKey).join('|');
+    if (keyA === keyB) { showCreateError(t('ui.identical_items')); return; }
+    const theme = $('#fTheme').value.trim();
+    const src = $('#fSrc').value.trim();
+    const backup = $('#fBackup').value.trim() || src;
+    const maxDet = Math.min(10, Math.max(1, Number($('#fMax').value) || 3));
+    const choice = document.querySelector('input[name="fakeChoice"]:checked')?.value || 'FAKE_B';
+    const salt = $('#fSalt').value.trim();
+    if (!theme || !src.startsWith('https://') || !salt) { showCreateError(t('ui.missing_create_fields')); return; }
+    // Pending state from here on: button disabled + 提交中… until runWrite
+    // resolves or throws (covers the pre-write readAllRounds re-read).
+    state.creating = true;
+    renderAll();
+    // Re-read live rounds at submit time so the commitment uses the true next id.
+    let rid = nextRoundId();
+    try { const all = await readAllRounds(); if (all.rounds?.length) rid = Math.max(...all.rounds.map((r) => r.round_id)) + 1; } catch { /* keep estimate */ }
+    const hash = await sha256Hex(`${rid}:${choice}:${salt}`);
+    rememberSalt(rid, choice, salt);
+    $('#studioDrawer').hidden = true;
+    state.view = 'workbench';
+    await runWrite('create_round', [theme, JSON.stringify(a), JSON.stringify(b), src, backup, hash, maxDet], rid, {
+      after: () => { state.roundId = rid; },
+    });
+    state.roundId = rid;
+    renderAll();
+  } catch (e) {
+    // Any unexpected throw (missing element, crypto failure, RPC surprise)
+    // is shown in the drawer instead of dying as an unhandled rejection.
+    showCreateError(`${t('ui.unexpected_create_error')}: ${String(e?.shortMessage || e?.message || e).slice(0, 300)}`);
+  } finally {
+    state.creating = false;
+    renderAll();
+  }
 }
 
 // ---------- static wiring ----------

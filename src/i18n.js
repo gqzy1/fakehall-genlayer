@@ -111,4 +111,18 @@ export const EXTRA = {
   'ui.confession': ['造假者自白 (可选，≤500字)', 'Forger confession (optional, ≤500 chars)'],
   'ui.max_detectives': ['侦探人数上限 (1–10)', 'Max detectives (1–10)'],
   'ui.theme': ['回合主题', 'Round theme'],
+  // R2 write-loop repair: inline validation errors + pending states. These
+  // replace native alert() calls in the create flow, which failed silently
+  // in a real browser (alert auto-dismissed, drawer left open, no feedback).
+  'ui.create_error_title': ['创建失败 — 请先修正以下字段：', 'Creation failed — fix these fields first:'],
+  'ui.submitting': ['提交中…', 'Submitting…'],
+  'ui.reading_state': ['正在读取链上状态…', 'Reading on-chain state…'],
+  'ui.retry_write': ['重试发送', 'Retry Send'],
+  'ui.image_url': ['图片链接', 'Image URL'],
+  'ui.salt_label': ['盐值', 'Salt'],
+  'ui.val_https': ['必须是 HTTPS 链接', 'must be an HTTPS link'],
+  'ui.val_chars': ['长度需为 {a}–{b} 字符', 'length must be {a}–{b} chars'],
+  'ui.unexpected_create_error': ['创建时出现意外错误', 'Unexpected error during creation'],
+  'ui.identical_items': ['A 与 B 至少要在一个维度上不同 (ITEMS_IDENTICAL_NO_LLM_NEEDED)', 'A and B must differ in at least one dimension (ITEMS_IDENTICAL_NO_LLM_NEEDED)'],
+  'ui.missing_create_fields': ['回合主题、HTTPS 公开来源链接与盐值均为必填', 'Round theme, an HTTPS public source URL and a salt are all required'],
 };
