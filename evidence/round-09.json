@@ -1,0 +1,78 @@
+{
+  "round_id": 9,
+  "theme": "The Rosetta Stone (cancel-empty-round exit)",
+  "source_url": "https://en.wikipedia.org/wiki/Rosetta_Stone",
+  "backup_source_url": "https://www.britishmuseum.org/collection/object/Y_EA24",
+  "commitment_hash": "c16571cd2e3b97454bf7f5dbce08ecfbcaabada1a69313f559e46cc399b98d04",
+  "secret_fake_choice": "FAKE_B",
+  "salt": "rosetta_cancel_salt",
+  "expected": {
+    "verdict": null,
+    "flaw": null,
+    "final_status": "CANCELLED",
+    "forger_points": 0
+  },
+  "steps": [
+    {
+      "label": "create_round",
+      "outcome": "ok",
+      "hash": "0x69eefa2bf795868fa6e1a75f79fdc58edf996d2681dccbd69ce2bac8456e566e",
+      "receipt": {
+        "status": 7,
+        "result": 6
+      },
+      "submission_error": null,
+      "readback": {
+        "round_id": 9,
+        "status": "CANCELLED",
+        "verdict": null,
+        "flaw_category": null,
+        "reveal_mode": null,
+        "forger_points": 0,
+        "vote_count": 0,
+        "forger_address": "0x48fa324c0ecd7803a1c0aa23b630bd080ecde2f4",
+        "investigations": []
+      },
+      "finalized": true
+    },
+    {
+      "label": "cancel_open_round",
+      "outcome": "ok",
+      "hash": "0xe0da6492928435103b809a6cd5b7a6f6c1049dca8fb27a51b3a1f6d20805ea2d",
+      "receipt": {
+        "status": 7,
+        "result": 6
+      },
+      "submission_error": null,
+      "readback": {
+        "round_id": 9,
+        "status": "CANCELLED",
+        "verdict": null,
+        "flaw_category": null,
+        "reveal_mode": null,
+        "forger_points": 0,
+        "vote_count": 0,
+        "forger_address": "0x48fa324c0ecd7803a1c0aa23b630bd080ecde2f4",
+        "investigations": []
+      },
+      "finalized": true
+    }
+  ],
+  "final_readback": {
+    "round_id": 9,
+    "status": "CANCELLED",
+    "verdict": null,
+    "flaw_category": null,
+    "reveal_mode": null,
+    "forger_points": 0,
+    "vote_count": 0,
+    "forger_address": "0x48fa324c0ecd7803a1c0aa23b630bd080ecde2f4",
+    "investigations": []
+  },
+  "actual": {
+    "status": "CANCELLED",
+    "verdict": null,
+    "flaw": null,
+    "forger_points": 0
+  }
+}

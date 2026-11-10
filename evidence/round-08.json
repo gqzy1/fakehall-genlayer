@@ -1,0 +1,133 @@
+{
+  "round_id": 8,
+  "theme": "The Rosetta Stone (dead-link adversarial)",
+  "source_url": "https://en.wikipedia.org/wiki/ThisPageDoesNotExistFakeHall12345",
+  "backup_source_url": "https://example.invalid/fakehall-backup",
+  "commitment_hash": "0b810f01c164ea0af8475d3b0c8894827685fde23958ea70a4c72205bc457ca5",
+  "secret_fake_choice": "FAKE_B",
+  "salt": "rosetta_deadlink_salt",
+  "expected": {
+    "verdict": "VOID",
+    "flaw": "NONE",
+    "final_status": "REVEALED",
+    "reveal_mode": "VOID_ARCHIVED",
+    "forger_points": 0
+  },
+  "steps": [
+    {
+      "label": "create_round",
+      "outcome": "ok",
+      "hash": "0x2c63f9a83bc9ecb28ed2b5d6b3f5290777a9790ad5b0b320c6d843d43119c43c",
+      "receipt": {
+        "status": 7,
+        "result": 6,
+        "leader": "SUCCESS"
+      },
+      "submission_error": null,
+      "readback": null,
+      "finalized": true
+    },
+    {
+      "label": "vote D1 FAKE_B",
+      "outcome": "ok",
+      "hash": "0xdd433dfc65060a3485189b2d896291006e37b34c8fee284a19d930fc00c1171b",
+      "receipt": {
+        "status": 7,
+        "result": 6,
+        "leader": "SUCCESS"
+      },
+      "submission_error": null,
+      "readback": null,
+      "finalized": true
+    },
+    {
+      "label": "vote D2 FAKE_A",
+      "outcome": "ok",
+      "hash": "0xfbef43ce1229f417da70856a11e589f63acf7bb3860a4ce0128bdb0b78299869",
+      "receipt": {
+        "status": 7,
+        "result": 6,
+        "leader": "SUCCESS"
+      },
+      "submission_error": null,
+      "readback": null,
+      "finalized": true
+    },
+    {
+      "label": "close_and_judge (expected FAIL-CLOSED)",
+      "outcome": "error-observed",
+      "hash": "0xe1e77bed0a3fae678ed8ee5794cd0479c899174ca0ba5f2d685639b5e06bab8d",
+      "receipt": {
+        "status": 7,
+        "result": 6,
+        "leader": "ERROR",
+        "error": null
+      },
+      "submission_error": null,
+      "readback": null,
+      "finalized": false
+    },
+    {
+      "label": "resolve_unreachable_round",
+      "outcome": "ok",
+      "hash": "0x8aeca3f328d99aa744c57638d7beae0def0da4ff122f278627e0db154f3fd542",
+      "receipt": {
+        "status": 7,
+        "result": 6,
+        "leader": "SUCCESS"
+      },
+      "submission_error": null,
+      "readback": null,
+      "finalized": true
+    },
+    {
+      "label": "archive_judged_round",
+      "outcome": "ok",
+      "hash": "0xd1864b41c0cf420b81cd1a54f1066e4117a2a348f44256d526854f69ae0ef505",
+      "receipt": {
+        "status": 7,
+        "result": 6,
+        "leader": "SUCCESS"
+      },
+      "submission_error": null,
+      "readback": null,
+      "finalized": true
+    }
+  ],
+  "final_readback": {
+    "round_id": 8,
+    "status": "REVEALED",
+    "verdict": "VOID",
+    "flaw_category": "NONE",
+    "reveal_mode": "VOID_ARCHIVED",
+    "forger_points": 0,
+    "vote_count": 2,
+    "forger_address": "0x48fa324c0ecd7803a1c0aa23b630bd080ecde2f4",
+    "investigations": [
+      {
+        "detective": "0x2ed17bd45d5aa9d84c35ca928fe1ece93621c68f",
+        "suspected_fake": "FAKE_B",
+        "flaw_category": "PROVENANCE_MISMATCH",
+        "points_awarded": 0
+      },
+      {
+        "detective": "0x0d7acb0342d7c2404d91aa362b43fa5db517cdd7",
+        "suspected_fake": "FAKE_A",
+        "flaw_category": "DATE_MISMATCH",
+        "points_awarded": 0
+      }
+    ]
+  },
+  "actual": {
+    "status": "REVEALED",
+    "verdict": "VOID",
+    "flaw": "NONE",
+    "reveal_mode": "VOID_ARCHIVED",
+    "forger_points": 0,
+    "d1_points": 0,
+    "d2_points": 0,
+    "supplement_verified": false,
+    "supplement_choice": null
+  },
+  "resumed_verified": true
+}

@@ -1,0 +1,129 @@
+{
+  "negatives": [
+    {
+      "id": "ADV-2-clone",
+      "action": "create_round with item_a identical to item_b",
+      "expected_error": "ITEMS_IDENTICAL_NO_LLM_NEEDED",
+      "label": "clone-gate create",
+      "outcome": "error-observed",
+      "hash": "0x9f81abaace5d3ed8d6c4fd2effbe9f6494403d4af7082618551a6455125e2dbb",
+      "receipt": {
+        "status": 7,
+        "result": 6,
+        "leader": "ERROR",
+        "error": null
+      },
+      "submission_error": null
+    },
+    {
+      "id": "ADV-5",
+      "action": "forger calls submit_investigation on own round 2",
+      "expected_error": "FORGER_CANNOT_VOTE_OWN_ROUND",
+      "label": "self-vote",
+      "outcome": "error-observed",
+      "hash": "0x54e4bf5b46edf3d745c89c593bdfb58231b9f25a7b2a808f8f734bd94b0eface",
+      "receipt": {
+        "status": 7,
+        "result": 6,
+        "leader": "ERROR",
+        "error": null
+      },
+      "submission_error": null,
+      "vote_count_after": 2
+    },
+    {
+      "id": "ADV-7",
+      "action": "detective D1 votes twice on round 2",
+      "expected_error": "DETECTIVE_ALREADY_VOTED",
+      "label": "duplicate vote",
+      "outcome": "error-observed",
+      "hash": "0xc3353efe1df16a4f9a75707179ca8c3f1ba6e21f3401ac5765e2f5d2a7979b81",
+      "receipt": {
+        "status": 7,
+        "result": 6,
+        "leader": "ERROR",
+        "error": null
+      },
+      "submission_error": null,
+      "vote_count_after": 2
+    },
+    {
+      "id": "ADV-10a",
+      "action": "reveal_forgery on round 1 after it is REVEALED",
+      "expected_error": "ROUND_ALREADY_FINALIZED",
+      "label": "replay reveal",
+      "outcome": "error-observed",
+      "hash": "0x78061e7d6539c345d78ac7c3be220a0aa9e127fcf52e949f6c3846f4f75fc0c8",
+      "receipt": {
+        "status": 7,
+        "result": 6,
+        "leader": "ERROR",
+        "error": null
+      },
+      "submission_error": null,
+      "readback": {
+        "round_id": 1,
+        "status": "REVEALED",
+        "verdict": "FAKE_B",
+        "flaw_category": "PROVENANCE_MISMATCH",
+        "reveal_mode": "FORGER_VERIFIED",
+        "forger_points": 100,
+        "vote_count": 2,
+        "forger_address": "0x48fa324c0ecd7803a1c0aa23b630bd080ecde2f4",
+        "investigations": [
+          {
+            "detective": "0x2ed17bd45d5aa9d84c35ca928fe1ece93621c68f",
+            "suspected_fake": "FAKE_B",
+            "flaw_category": "PROVENANCE_MISMATCH",
+            "points_awarded": 100
+          },
+          {
+            "detective": "0x0d7acb0342d7c2404d91aa362b43fa5db517cdd7",
+            "suspected_fake": "FAKE_A",
+            "flaw_category": "DATE_MISMATCH",
+            "points_awarded": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "ADV-10b",
+      "action": "archive_judged_round on round 1 after it is REVEALED",
+      "expected_error": "ROUND_ALREADY_FINALIZED",
+      "label": "replay archive",
+      "outcome": "error-observed",
+      "hash": "0x1f703ec0419e3e4f221582cebce5d37e607c3b8128c16384efe973d1621180e1",
+      "receipt": {
+        "status": 7,
+        "result": 6,
+        "leader": "ERROR",
+        "error": null
+      },
+      "submission_error": null,
+      "readback": {
+        "round_id": 1,
+        "status": "REVEALED",
+        "verdict": "FAKE_B",
+        "flaw_category": "PROVENANCE_MISMATCH",
+        "reveal_mode": "FORGER_VERIFIED",
+        "forger_points": 100,
+        "vote_count": 2,
+        "forger_address": "0x48fa324c0ecd7803a1c0aa23b630bd080ecde2f4",
+        "investigations": [
+          {
+            "detective": "0x2ed17bd45d5aa9d84c35ca928fe1ece93621c68f",
+            "suspected_fake": "FAKE_B",
+            "flaw_category": "PROVENANCE_MISMATCH",
+            "points_awarded": 100
+          },
+          {
+            "detective": "0x0d7acb0342d7c2404d91aa362b43fa5db517cdd7",
+            "suspected_fake": "FAKE_A",
+            "flaw_category": "DATE_MISMATCH",
+            "points_awarded": 0
+          }
+        ]
+      }
+    }
+  ]
+}

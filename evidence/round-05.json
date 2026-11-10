@@ -1,0 +1,133 @@
+{
+  "round_id": 5,
+  "theme": "The Mask of Tutankhamun (proper round, FAKE_B provenance tamper)",
+  "source_url": "https://en.wikipedia.org/wiki/Mask_of_Tutankhamun",
+  "backup_source_url": "https://www.wikidata.org/wiki/Q157047",
+  "commitment_hash": "968ee265f9ccf307992a5b88d8349d241516af8f2a71e19138d9095f5f49bec4",
+  "secret_fake_choice": "FAKE_B",
+  "salt": "tutankhamun_carter_1925_salt",
+  "expected": {
+    "verdict": "FAKE_B",
+    "flaw": "PROVENANCE_MISMATCH",
+    "final_status": "REVEALED",
+    "reveal_mode": "FORGER_VERIFIED",
+    "forger_points": 100
+  },
+  "steps": [
+    {
+      "label": "create_round",
+      "outcome": "ok",
+      "hash": "0x4065cba444bb3a63350fe57134d7d8b915fd21689d2bc15c3498e30cc7d17ad6",
+      "receipt": {
+        "status": 7,
+        "result": 6,
+        "leader": "SUCCESS"
+      },
+      "submission_error": null,
+      "readback": null,
+      "finalized": true
+    },
+    {
+      "label": "vote D1 FAKE_B",
+      "outcome": "ok",
+      "hash": "0x43b07c81027a32e806837200ceb3b2666d8462e2ec361b6791e05a55ba6de9fa",
+      "receipt": {
+        "status": 7,
+        "result": 6,
+        "leader": "SUCCESS"
+      },
+      "submission_error": null,
+      "readback": null,
+      "finalized": true
+    },
+    {
+      "label": "vote D2 FAKE_A",
+      "outcome": "ok",
+      "hash": "0xadc2c284bb63de4c16523cba94e03700fda9d935c604f88e23d03a6b89020e8b",
+      "receipt": {
+        "status": 7,
+        "result": 6,
+        "leader": "SUCCESS"
+      },
+      "submission_error": null,
+      "readback": null,
+      "finalized": true
+    },
+    {
+      "label": "close_and_judge",
+      "outcome": "ok",
+      "hash": "0xb3a23ced57bb74a3e963d650a8a73c0040ec4d26d39b7d23a278122055192650",
+      "receipt": {
+        "status": 7,
+        "result": 6,
+        "leader": "SUCCESS"
+      },
+      "submission_error": null,
+      "readback": null,
+      "finalized": true
+    },
+    {
+      "label": "reveal_forgery (wrong salt, expected ERROR)",
+      "outcome": "error-observed",
+      "hash": "0xeb962a0d4c109a2e1ee54863eb19dfbf60dc3ff00deddf3b2615852209504966",
+      "receipt": {
+        "status": 7,
+        "result": 6,
+        "leader": "ERROR",
+        "error": null
+      },
+      "submission_error": null,
+      "readback": null,
+      "finalized": false
+    },
+    {
+      "label": "reveal_forgery",
+      "outcome": "ok",
+      "hash": "0xabdebc41f9a72a53bebc30ffc303de5306d5e541c53bdecaf9009059c057edc0",
+      "receipt": {
+        "status": 7,
+        "result": 6,
+        "leader": "SUCCESS"
+      },
+      "submission_error": null,
+      "readback": null,
+      "finalized": true
+    }
+  ],
+  "final_readback": {
+    "round_id": 5,
+    "status": "REVEALED",
+    "verdict": "FAKE_B",
+    "flaw_category": "PROVENANCE_MISMATCH",
+    "reveal_mode": "FORGER_VERIFIED",
+    "forger_points": 100,
+    "vote_count": 2,
+    "forger_address": "0x48fa324c0ecd7803a1c0aa23b630bd080ecde2f4",
+    "investigations": [
+      {
+        "detective": "0x2ed17bd45d5aa9d84c35ca928fe1ece93621c68f",
+        "suspected_fake": "FAKE_B",
+        "flaw_category": "PROVENANCE_MISMATCH",
+        "points_awarded": 100
+      },
+      {
+        "detective": "0x0d7acb0342d7c2404d91aa362b43fa5db517cdd7",
+        "suspected_fake": "FAKE_A",
+        "flaw_category": "DATE_MISMATCH",
+        "points_awarded": 0
+      }
+    ]
+  },
+  "actual": {
+    "status": "REVEALED",
+    "verdict": "FAKE_B",
+    "flaw": "PROVENANCE_MISMATCH",
+    "reveal_mode": "FORGER_VERIFIED",
+    "forger_points": 100,
+    "d1_points": 100,
+    "d2_points": 0,
+    "supplement_verified": false,
+    "supplement_choice": null
+  },
+  "resumed_verified": true
+}

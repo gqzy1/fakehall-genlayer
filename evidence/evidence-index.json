@@ -1,0 +1,330 @@
+{
+  "network": "Stable Studionet",
+  "chain_id": 61999,
+  "rpc": "https://studio.genlayer.com/api",
+  "contract_address": "0xB15056c8b821DA4931fB198a4F4Ef14f610cEdf2",
+  "deploy_tx": "0x6087639f44bad22af517d42a1264ac4fc6e719c98910dd92bf775d24fd263f0f",
+  "source_sha256": "486329c536e21ad70b8e93ffae7bb0b1dcab843fc38c39897e7932defaf980f4",
+  "byte_parity": "BYTE_PARITY_MATCH: TRUE",
+  "explorer": "https://explorer-studio.genlayer.com/address/0xB15056c8b821DA4931fB198a4F4Ef14f610cEdf2",
+  "wallets": {
+    "F": "0x48fa324c0ecd7803a1c0aa23b630bd080ecde2f4",
+    "D1": "0x2ed17bd45d5aa9d84c35ca928fe1ece93621c68f",
+    "D2": "0x0d7acb0342d7c2404d91aa362b43fa5db517cdd7"
+  },
+  "tx_total_submitted": 48,
+  "tx_finalized_ok": 41,
+  "steps_recorded": 48,
+  "rounds": [
+    {
+      "round_id": 1,
+      "failed": false
+    },
+    {
+      "round_id": 2,
+      "failed": false
+    },
+    {
+      "round_id": 3,
+      "failed": false
+    },
+    {
+      "round_id": 4,
+      "failed": false
+    },
+    {
+      "round_id": 5,
+      "failed": false
+    },
+    {
+      "round_id": 6,
+      "failed": false
+    },
+    {
+      "round_id": 7,
+      "failed": false
+    },
+    {
+      "round_id": 8,
+      "failed": false
+    },
+    {
+      "round_id": 9,
+      "failed": false
+    }
+  ],
+  "failed_rounds": [],
+  "negatives": [
+    {
+      "id": "ADV-2-clone",
+      "expected_error": "ITEMS_IDENTICAL_NO_LLM_NEEDED",
+      "outcome": "error-observed",
+      "hash": "0x9f81abaace5d3ed8d6c4fd2effbe9f6494403d4af7082618551a6455125e2dbb"
+    },
+    {
+      "id": "ADV-5",
+      "expected_error": "FORGER_CANNOT_VOTE_OWN_ROUND",
+      "outcome": "error-observed",
+      "hash": "0x54e4bf5b46edf3d745c89c593bdfb58231b9f25a7b2a808f8f734bd94b0eface"
+    },
+    {
+      "id": "ADV-7",
+      "expected_error": "DETECTIVE_ALREADY_VOTED",
+      "outcome": "error-observed",
+      "hash": "0xc3353efe1df16a4f9a75707179ca8c3f1ba6e21f3401ac5765e2f5d2a7979b81"
+    },
+    {
+      "id": "ADV-10a",
+      "expected_error": "ROUND_ALREADY_FINALIZED",
+      "outcome": "error-observed",
+      "hash": "0x78061e7d6539c345d78ac7c3be220a0aa9e127fcf52e949f6c3846f4f75fc0c8"
+    },
+    {
+      "id": "ADV-10b",
+      "expected_error": "ROUND_ALREADY_FINALIZED",
+      "outcome": "error-observed",
+      "hash": "0x1f703ec0419e3e4f221582cebce5d37e607c3b8128c16384efe973d1621180e1"
+    }
+  ],
+  "final_rounds": [
+    {
+      "round_id": 1,
+      "status": "REVEALED",
+      "verdict": "FAKE_B",
+      "flaw_category": "PROVENANCE_MISMATCH",
+      "reveal_mode": "FORGER_VERIFIED",
+      "forger_points": 100,
+      "vote_count": 2,
+      "forger_address": "0x48fa324c0ecd7803a1c0aa23b630bd080ecde2f4",
+      "investigations": [
+        {
+          "detective": "0x2ed17bd45d5aa9d84c35ca928fe1ece93621c68f",
+          "suspected_fake": "FAKE_B",
+          "flaw_category": "PROVENANCE_MISMATCH",
+          "points_awarded": 100
+        },
+        {
+          "detective": "0x0d7acb0342d7c2404d91aa362b43fa5db517cdd7",
+          "suspected_fake": "FAKE_A",
+          "flaw_category": "DATE_MISMATCH",
+          "points_awarded": 0
+        }
+      ]
+    },
+    {
+      "round_id": 2,
+      "status": "VOTING",
+      "verdict": null,
+      "flaw_category": null,
+      "reveal_mode": null,
+      "forger_points": 0,
+      "vote_count": 2,
+      "forger_address": "0x48fa324c0ecd7803a1c0aa23b630bd080ecde2f4",
+      "investigations": [
+        {
+          "detective": "0x2ed17bd45d5aa9d84c35ca928fe1ece93621c68f",
+          "suspected_fake": "SEALED_UNTIL_JUDGED",
+          "flaw_category": "SEALED_UNTIL_JUDGED",
+          "points_awarded": 0
+        },
+        {
+          "detective": "0x0d7acb0342d7c2404d91aa362b43fa5db517cdd7",
+          "suspected_fake": "SEALED_UNTIL_JUDGED",
+          "flaw_category": "SEALED_UNTIL_JUDGED",
+          "points_awarded": 0
+        }
+      ]
+    },
+    {
+      "round_id": 3,
+      "status": "REVEALED",
+      "verdict": "VOID",
+      "flaw_category": "NONE",
+      "reveal_mode": "COMMITMENT_CONTRADICTED",
+      "forger_points": 0,
+      "vote_count": 2,
+      "forger_address": "0x48fa324c0ecd7803a1c0aa23b630bd080ecde2f4",
+      "investigations": [
+        {
+          "detective": "0x2ed17bd45d5aa9d84c35ca928fe1ece93621c68f",
+          "suspected_fake": "FAKE_A",
+          "flaw_category": "DATE_MISMATCH",
+          "points_awarded": 0
+        },
+        {
+          "detective": "0x0d7acb0342d7c2404d91aa362b43fa5db517cdd7",
+          "suspected_fake": "FAKE_B",
+          "flaw_category": "PROVENANCE_MISMATCH",
+          "points_awarded": 0
+        }
+      ]
+    },
+    {
+      "round_id": 4,
+      "status": "REVEALED",
+      "verdict": "FAKE_A",
+      "flaw_category": "DATE_MISMATCH",
+      "reveal_mode": "FORGER_VERIFIED",
+      "forger_points": 100,
+      "vote_count": 2,
+      "forger_address": "0x48fa324c0ecd7803a1c0aa23b630bd080ecde2f4",
+      "investigations": [
+        {
+          "detective": "0x2ed17bd45d5aa9d84c35ca928fe1ece93621c68f",
+          "suspected_fake": "FAKE_A",
+          "flaw_category": "DATE_MISMATCH",
+          "points_awarded": 100
+        },
+        {
+          "detective": "0x0d7acb0342d7c2404d91aa362b43fa5db517cdd7",
+          "suspected_fake": "FAKE_B",
+          "flaw_category": "MATERIAL_MISMATCH",
+          "points_awarded": 0
+        }
+      ]
+    },
+    {
+      "round_id": 5,
+      "status": "REVEALED",
+      "verdict": "FAKE_B",
+      "flaw_category": "PROVENANCE_MISMATCH",
+      "reveal_mode": "FORGER_VERIFIED",
+      "forger_points": 100,
+      "vote_count": 2,
+      "forger_address": "0x48fa324c0ecd7803a1c0aa23b630bd080ecde2f4",
+      "investigations": [
+        {
+          "detective": "0x2ed17bd45d5aa9d84c35ca928fe1ece93621c68f",
+          "suspected_fake": "FAKE_B",
+          "flaw_category": "PROVENANCE_MISMATCH",
+          "points_awarded": 100
+        },
+        {
+          "detective": "0x0d7acb0342d7c2404d91aa362b43fa5db517cdd7",
+          "suspected_fake": "FAKE_A",
+          "flaw_category": "DATE_MISMATCH",
+          "points_awarded": 0
+        }
+      ]
+    },
+    {
+      "round_id": 6,
+      "status": "REVEALED",
+      "verdict": "VOID",
+      "flaw_category": "NONE",
+      "reveal_mode": "VOID_ARCHIVED",
+      "forger_points": 0,
+      "vote_count": 2,
+      "forger_address": "0x48fa324c0ecd7803a1c0aa23b630bd080ecde2f4",
+      "investigations": [
+        {
+          "detective": "0x2ed17bd45d5aa9d84c35ca928fe1ece93621c68f",
+          "suspected_fake": "FAKE_A",
+          "flaw_category": "DATE_MISMATCH",
+          "points_awarded": 0
+        },
+        {
+          "detective": "0x0d7acb0342d7c2404d91aa362b43fa5db517cdd7",
+          "suspected_fake": "FAKE_B",
+          "flaw_category": "PROVENANCE_MISMATCH",
+          "points_awarded": 0
+        }
+      ]
+    },
+    {
+      "round_id": 7,
+      "status": "REVEALED",
+      "verdict": "VOID",
+      "flaw_category": "NONE",
+      "reveal_mode": "VOID_ARCHIVED",
+      "forger_points": 0,
+      "vote_count": 2,
+      "forger_address": "0x48fa324c0ecd7803a1c0aa23b630bd080ecde2f4",
+      "investigations": [
+        {
+          "detective": "0x2ed17bd45d5aa9d84c35ca928fe1ece93621c68f",
+          "suspected_fake": "FAKE_A",
+          "flaw_category": "DATE_MISMATCH",
+          "points_awarded": 0
+        },
+        {
+          "detective": "0x0d7acb0342d7c2404d91aa362b43fa5db517cdd7",
+          "suspected_fake": "FAKE_B",
+          "flaw_category": "PROVENANCE_MISMATCH",
+          "points_awarded": 0
+        }
+      ]
+    },
+    {
+      "round_id": 8,
+      "status": "REVEALED",
+      "verdict": "VOID",
+      "flaw_category": "NONE",
+      "reveal_mode": "VOID_ARCHIVED",
+      "forger_points": 0,
+      "vote_count": 2,
+      "forger_address": "0x48fa324c0ecd7803a1c0aa23b630bd080ecde2f4",
+      "investigations": [
+        {
+          "detective": "0x2ed17bd45d5aa9d84c35ca928fe1ece93621c68f",
+          "suspected_fake": "FAKE_B",
+          "flaw_category": "PROVENANCE_MISMATCH",
+          "points_awarded": 0
+        },
+        {
+          "detective": "0x0d7acb0342d7c2404d91aa362b43fa5db517cdd7",
+          "suspected_fake": "FAKE_A",
+          "flaw_category": "DATE_MISMATCH",
+          "points_awarded": 0
+        }
+      ]
+    },
+    {
+      "round_id": 9,
+      "status": "CANCELLED",
+      "verdict": null,
+      "flaw_category": null,
+      "reveal_mode": null,
+      "forger_points": 0,
+      "vote_count": 0,
+      "forger_address": "0x48fa324c0ecd7803a1c0aa23b630bd080ecde2f4",
+      "investigations": []
+    }
+  ],
+  "leaderboards": {
+    "detectives": [
+      {
+        "accuracy_bps": 10000,
+        "address": "0x2ed17bd45d5aa9d84c35ca928fe1ece93621c68f",
+        "correct_cases": 3,
+        "total_points": 300,
+        "valid_cases": 3
+      },
+      {
+        "accuracy_bps": 0,
+        "address": "0x0d7acb0342d7c2404d91aa362b43fa5db517cdd7",
+        "correct_cases": 0,
+        "total_points": 0,
+        "valid_cases": 3
+      }
+    ],
+    "forgers": [
+      {
+        "address": "0x48fa324c0ecd7803a1c0aa23b630bd080ecde2f4",
+        "deception_rate_bps": 3750,
+        "revealed_rounds_count": 4,
+        "total_challenged": 8,
+        "total_fooled": 3,
+        "total_points": 300
+      }
+    ]
+  },
+  "gallery_round_ids": [
+    1,
+    4,
+    5
+  ],
+  "generated_at": "2026-11-10T18:57:39.376Z",
+  "tx_total_hashes_all_runs": 58,
+  "tx_totals_note": "48 evidence-path tx hashes in the checkpoint ledger (41 ok + 7 error-observed) + 1 deploy tx + 9 failed close-attempt hashes (R3 x1 MAJORITY_DISAGREE; R6 x3 fail-closed; R7 x5 fail-closed) = 58 tx hashes, all FINALIZED. One further R6 close attempt produced no hash (transient RPC submission error)."
+}
