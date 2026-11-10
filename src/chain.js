@@ -65,7 +65,13 @@ export async function readAllRounds() {
   });
   const data = JSON.parse(raw);
   const is_finalized_readback = typeof raw === 'string' && raw.length > 2 && Array.isArray(data);
-  return { rounds: data, is_finalized_readback };
+  // Stamp the flag onto EACH round HERE, inside this readback function.
+  // The contract's round dicts do not carry it, and the workbench export
+  // gate reads snap.is_finalized_readback — without this stamp export could
+  // never unlock after a FINALIZED readback. The flag is still derived here
+  // from the actual latest-final read, never set by any caller.
+  const rounds = Array.isArray(data) ? data.map((r) => ({ ...r, is_finalized_readback })) : data;
+  return { rounds, is_finalized_readback };
 }
 
 export async function readLeaderboards() {
