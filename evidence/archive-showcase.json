@@ -1,0 +1,551 @@
+{
+  "chainId": 61999,
+  "address": "0x0d99A88De2AD4151453297b02d17bCD3EaA09d50",
+  "cases": {
+    "1": {
+      "id": 2,
+      "theme": "Sutton Hoo Helmet — The Dating Dispute",
+      "steps": {
+        "create": {
+          "method": "create_round",
+          "hash": "0x3aa919efd56d634de62770123cc6139357b0fff03c0e70cbbce300084cfa3d93",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        },
+        "commit": {
+          "method": "commit_investigation",
+          "hash": "0x44091e8f95d2859b0c7b8c829a860866535d153edc559542bb5b1505c2303f9e",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        },
+        "lock": {
+          "method": "open_ballot_reveal",
+          "hash": "0x815e425c3190fc1f16c55ab83b4cc8e4b2f39406ead852449457b0121617770b",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        },
+        "reveal": {
+          "method": "reveal_investigation",
+          "hash": "0xc1ddd7d29df84b4d68fb001a3a286fb2ae790971eebfc37dcb96d21788642275",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        },
+        "judge_1": {
+          "method": "close_and_judge",
+          "hash": "0x02e35e5396685fe3723054c50dd84f9a469249eb3c9e1e2b0a2a39a6a5a333e8",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        },
+        "archive": {
+          "method": "reveal_forgery",
+          "hash": "0xa92a79fc170976da07687c8a5bbd78469cd6940379d7125918c6d05b02aee66c",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        }
+      },
+      "readback": {
+        "audit_summary": "Item A's c.1066 date contradicts the source, while item B's early seventh-century date matches the source.",
+        "backup_source_url": "https://www.britishmuseum.org/collection/object/H_1939-1010-93",
+        "ballot_commitments": {
+          "0xc651252db03dd8f1a015551075b37e9013d6cb07": "8e524fe5c3377bab959526fc822693ad2baa5f38bba00df8c2b14d428aa4038f"
+        },
+        "commitment_hash": "ec1d3681fd864847cd6a3d3ccb5ef36bad40bdfd223ab608f6e9c66aff07193e",
+        "confession": "Recorded demonstration case.",
+        "fake_a_votes": 1,
+        "fake_b_votes": 0,
+        "flaw_category": "DATE_MISMATCH",
+        "forger_address": "0x23ba6564ea0085a9c7a74df9009b1f7e0788d5ad",
+        "forger_points": 0,
+        "investigations": [
+          {
+            "detective": "0xc651252db03dd8f1a015551075b37e9013d6cb07",
+            "detective_note": "Showcase test ballot based on the cited exhibit record.",
+            "flaw_category": "DATE_MISMATCH",
+            "points_awarded": 100,
+            "suspected_fake": "FAKE_A"
+          }
+        ],
+        "item_a": {
+          "claimed_date": "c. 1066 CE (Late Norman Conquest period, reign of William I)",
+          "claimed_material": "Iron cap, neck guard, cheek pieces, and face mask covered with tinned copper-alloy panels, decorated with animal interlace and eyebrows inlaid with silver wire and garnets",
+          "claimed_provenance": "Excavated in 1939 by self-taught archaeologist Basil Brown from the Mound 1 ship-burial at Sutton Hoo, Suffolk, England; held at the British Museum.",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Sutton_Hoo_helmet_2016.png/960px-Sutton_Hoo_helmet_2016.png",
+          "narrative": "An Anglo-Saxon parade helmet of iron, its cap, neck guard, cheek pieces and face mask covered with tinned copper-alloy panels decorated with animal interlace, eyebrows inlaid with silver wire and garnets. Made c. 1066 CE in the reign of William I after the Norman Conquest, and excavated in 1939 by Basil Brown from the Mound 1 ship-burial at Sutton Hoo, Suffolk; held at the British Museum.",
+          "title": "The Sutton Hoo Princely Helmet"
+        },
+        "item_b": {
+          "claimed_date": "Early 7th century CE (c. 625 CE, Anglo-Saxon period)",
+          "claimed_material": "Iron cap, neck guard, cheek pieces, and face mask covered with tinned copper-alloy panels, decorated with animal interlace and eyebrows inlaid with silver wire and garnets",
+          "claimed_provenance": "Excavated in 1939 by self-taught archaeologist Basil Brown from the Mound 1 ship-burial at Sutton Hoo, Suffolk, England; held at the British Museum.",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Sutton_Hoo_helmet_2016.png/960px-Sutton_Hoo_helmet_2016.png",
+          "narrative": "An Anglo-Saxon parade helmet of iron, its cap, neck guard, cheek pieces and face mask covered with tinned copper-alloy panels decorated with animal interlace, eyebrows inlaid with silver wire and garnets. Made in the early 7th century CE, c. 625 CE, and excavated in 1939 by self-taught archaeologist Basil Brown from the Mound 1 ship-burial at Sutton Hoo, Suffolk, England; held at the British Museum.",
+          "title": "The Sutton Hoo Princely Helmet"
+        },
+        "max_detectives": 1,
+        "reveal_deadline": "2026-11-19T15:31:15.748791+00:00",
+        "reveal_mode": "FORGER_VERIFIED",
+        "round_id": 2,
+        "source_quote": "probably dating from the early seventh century",
+        "source_url": "https://en.wikipedia.org/wiki/Sutton_Hoo_helmet",
+        "status": "REVEALED",
+        "supplement_choice": null,
+        "supplement_verified": false,
+        "theme": "Sutton Hoo Helmet — The Dating Dispute",
+        "verdict": "FAKE_A",
+        "vote_count": 1
+      }
+    },
+    "2": {
+      "id": 3,
+      "theme": "Tutankhamun’s Mask — The Provenance Dispute",
+      "steps": {
+        "create": {
+          "method": "create_round",
+          "hash": "0x9b7bdb87dd079b3a4bd8fd537847c3df650f2ef95a3e744ddcad17240248c170",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        },
+        "commit": {
+          "method": "commit_investigation",
+          "hash": "0xf90e1b5c1f91b4b0b21c242f15dfc09b30211108b174c799767cad1703495497",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        },
+        "lock": {
+          "method": "open_ballot_reveal",
+          "hash": "0x6850bd68660f53b1c4e80de022e4201df87dd5c3ccb35a1ef5e4c15f23856242",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        },
+        "reveal": {
+          "method": "reveal_investigation",
+          "hash": "0xb5c0a091e592c42ec85f8e36649a0f5bd12e9a9af576b66b7e9a7c5ff1cd1984",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        },
+        "judge_1": {
+          "method": "close_and_judge",
+          "hash": "0x9697d5b91d71fab0e32c03c24a888052fab07c60fc679f77959a5dee86a0e121",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "ERROR",
+            "error": null
+          }
+        },
+        "judge_2": {
+          "method": "close_and_judge",
+          "hash": "0xbd1fc717f457e640d2d78ed154c1f87a65e809e34ed136ff5c125f612e9d486f",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "ERROR",
+            "error": null
+          }
+        },
+        "judge_3": {
+          "method": "close_and_judge",
+          "hash": "0xcb1b609cb2ab18ecf9ea44741a7c6ac30c3970beca899bd3bef6ea872e923885",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "ERROR",
+            "error": null
+          }
+        }
+      },
+      "readback": {
+        "audit_summary": "",
+        "backup_source_url": "https://www.wikidata.org/wiki/Q157047",
+        "ballot_commitments": {
+          "0x62548c9af0f13612f1bc8a24e6a35a05a3f357f3": "5f3b4048debfbba3f9800fd0ad18af1348de2ea1c54b3fdaf104f1cd5e96f45c"
+        },
+        "commitment_hash": "15b102074099c90f28078d8bd5f8cb5cf6efe86e5d133bce41a66a07fa5f621b",
+        "confession": "",
+        "fake_a_votes": 0,
+        "fake_b_votes": 1,
+        "flaw_category": null,
+        "forger_address": "0xec8d7444dedc8ef83a19d28ee8623e47291f7796",
+        "forger_points": 0,
+        "investigations": [
+          {
+            "detective": "0x62548c9af0f13612f1bc8a24e6a35a05a3f357f3",
+            "detective_note": "Showcase test ballot based on the cited exhibit record.",
+            "flaw_category": "PROVENANCE_MISMATCH",
+            "points_awarded": 0,
+            "suspected_fake": "FAKE_B"
+          }
+        ],
+        "item_a": {
+          "claimed_date": "c. 1323 BCE (18th Dynasty, reign of Tutankhamun)",
+          "claimed_material": "High-karat gold mask inlaid with lapis lazuli, carnelian, quartz and coloured glass; height 54 cm, weight approx. 10.23 kg",
+          "claimed_provenance": "Discovered in 1925 by Howard Carter in tomb KV62, Valley of the Kings; held at the Egyptian Museum, Cairo (JE 60672)",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/CairoEgMuseumTaaMaskMostlyPhotographed.jpg/960px-CairoEgMuseumTaaMaskMostlyPhotographed.jpg",
+          "narrative": "A funerary mask of high-karat gold inlaid with lapis lazuli, carnelian, quartz and coloured glass, 54 cm high and weighing about 10.23 kg, made c. 1323 BCE in the 18th Dynasty reign of Tutankhamun. Howard Carter discovered it in 1925 in tomb KV62 in the Valley of the Kings; it is held at the Egyptian Museum in Cairo under JE 60672.",
+          "title": "The Mask of Tutankhamun"
+        },
+        "item_b": {
+          "claimed_date": "c. 1323 BCE (18th Dynasty, reign of Tutankhamun)",
+          "claimed_material": "High-karat gold mask inlaid with lapis lazuli, carnelian, quartz and coloured glass; height 54 cm, weight approx. 10.23 kg",
+          "claimed_provenance": "Discovered in 1881 by Gaston Maspero in Alexandria harbor; held at the Pergamon Museum, Berlin",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/CairoEgMuseumTaaMaskMostlyPhotographed.jpg/960px-CairoEgMuseumTaaMaskMostlyPhotographed.jpg",
+          "narrative": "A funerary mask of high-karat gold inlaid with lapis lazuli, carnelian, quartz and coloured glass, 54 cm high and weighing about 10.23 kg, made c. 1323 BCE in the 18th Dynasty reign of Tutankhamun. Gaston Maspero discovered it in 1881 in Alexandria harbor; it is held at the Pergamon Museum in Berlin.",
+          "title": "The Mask of Tutankhamun"
+        },
+        "max_detectives": 1,
+        "reveal_deadline": "2026-11-19T15:32:26.037599+00:00",
+        "reveal_mode": null,
+        "round_id": 3,
+        "source_quote": "",
+        "source_url": "https://en.wikipedia.org/wiki/Mask_of_Tutankhamun",
+        "status": "BALLOT_REVEAL",
+        "supplement_choice": null,
+        "supplement_verified": false,
+        "theme": "Tutankhamun’s Mask — The Provenance Dispute",
+        "verdict": null,
+        "vote_count": 1
+      },
+      "note": "The judgment attempts failed. The revealed ballot remains available for judgment."
+    },
+    "3": {
+      "id": 4,
+      "theme": "Tutankhamun’s Mask — Two Conflicting Records",
+      "steps": {
+        "create": {
+          "method": "create_round",
+          "hash": "0x774fba715039ef8aca394b7fca7ea9c4a717bdac24ab69bfafd8a9f1dcf542d4",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        },
+        "commit": {
+          "method": "commit_investigation",
+          "hash": "0xf0718fc295be23a373758201e2f01ad7381863b6ba13e6d5ca0e2a4dbe6aff11",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        },
+        "lock": {
+          "method": "open_ballot_reveal",
+          "hash": "0xf18bef66a441c7d611eadc013c90b449f9c768289ebb11ab61a9cf054f15fc0b",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        },
+        "reveal": {
+          "method": "reveal_investigation",
+          "hash": "0x4ec0b7fff3ac38cf130b8129cc2d8fa1b08883fa45498d92b0b17e4a97b50c89",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        },
+        "judge_1": {
+          "method": "close_and_judge",
+          "hash": "0x5dbb25e017d0b9c84f0a4d22cd394ca815311932318d40ff040ce45cc2b656f6",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        },
+        "archive": {
+          "method": "archive_judged_round",
+          "hash": "0x4530e78659a0f9bb288d1e4062caf0023fa47bdf8966eea0ad0fe92d2d462436",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        }
+      },
+      "readback": {
+        "audit_summary": "Both items contradict the source: A gives the wrong date, material and weight, while B gives the wrong discoverer, discovery place and museum.",
+        "backup_source_url": "https://www.wikidata.org/wiki/Q157047",
+        "ballot_commitments": {
+          "0xfbb5d592ec8e673747a9ace90297a8ef62a2e5fa": "81c9305012259aeb676ce8cb76c2ce4b98127df2a99dd63c0f41670243abfa7c"
+        },
+        "commitment_hash": "c95769b36eefc00d0eb0f9c3f0ca9adb5d5e195b8cdacd793a013b793a870e7a",
+        "confession": "",
+        "fake_a_votes": 0,
+        "fake_b_votes": 1,
+        "flaw_category": "NONE",
+        "forger_address": "0x40d93ffd40ecf30efe8a287b6e5502be17a9e9b3",
+        "forger_points": 0,
+        "investigations": [
+          {
+            "detective": "0xfbb5d592ec8e673747a9ace90297a8ef62a2e5fa",
+            "detective_note": "Showcase test ballot based on the cited exhibit record.",
+            "flaw_category": "PROVENANCE_MISMATCH",
+            "points_awarded": 0,
+            "suspected_fake": "FAKE_B"
+          }
+        ],
+        "item_a": {
+          "claimed_date": "c. 30 BCE (Roman annexation of Egypt)",
+          "claimed_material": "Gilded cast iron mask, height 54 cm, weight 42 kg",
+          "claimed_provenance": "Discovered in 1925 by Howard Carter in tomb KV62, Valley of the Kings; held at the Egyptian Museum, Cairo (JE 60672)",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/CairoEgMuseumTaaMaskMostlyPhotographed.jpg/960px-CairoEgMuseumTaaMaskMostlyPhotographed.jpg",
+          "narrative": "A funerary mask of gilded cast iron, 54 cm high and weighing 42 kg, made c. 30 BCE after the Roman annexation of Egypt. Howard Carter discovered it in 1925 in tomb KV62 in the Valley of the Kings; it is held at the Egyptian Museum in Cairo under JE 60672.",
+          "title": "The Mask of Tutankhamun"
+        },
+        "item_b": {
+          "claimed_date": "c. 1323 BCE (18th Dynasty, reign of Tutankhamun)",
+          "claimed_material": "High-karat gold mask inlaid with lapis lazuli, carnelian, quartz and coloured glass; height 54 cm, weight approx. 10.23 kg",
+          "claimed_provenance": "Discovered in 1881 by Gaston Maspero in Alexandria harbor; held at the Pergamon Museum, Berlin",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/CairoEgMuseumTaaMaskMostlyPhotographed.jpg/960px-CairoEgMuseumTaaMaskMostlyPhotographed.jpg",
+          "narrative": "A funerary mask of high-karat gold inlaid with lapis lazuli, carnelian, quartz and coloured glass, 54 cm high and weighing about 10.23 kg, made c. 1323 BCE in the 18th Dynasty reign of Tutankhamun. Gaston Maspero discovered it in 1881 in Alexandria harbor; it is held at the Pergamon Museum in Berlin.",
+          "title": "The Mask of Tutankhamun"
+        },
+        "max_detectives": 1,
+        "reveal_deadline": "2026-11-19T15:33:54.131744+00:00",
+        "reveal_mode": "VOID_ARCHIVED",
+        "round_id": 4,
+        "source_quote": "",
+        "source_url": "https://en.wikipedia.org/wiki/Mask_of_Tutankhamun",
+        "status": "REVEALED",
+        "supplement_choice": null,
+        "supplement_verified": false,
+        "theme": "Tutankhamun’s Mask — Two Conflicting Records",
+        "verdict": "VOID",
+        "vote_count": 1
+      }
+    },
+    "4": {
+      "id": 5,
+      "theme": "The Rosetta Stone — Same Facts, Different Wording",
+      "steps": {
+        "create": {
+          "method": "create_round",
+          "hash": "0xf8043570cfb4e3b5f6175fdc164936e1efc036148b1c2179b282afa43737cd40",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        },
+        "commit": {
+          "method": "commit_investigation",
+          "hash": "0xc421f9f3069a55cf28edcda8130f34cb9b9a400e4fc3e425686f9e62c061ed78",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        }
+      },
+      "readback": {
+        "audit_summary": "",
+        "backup_source_url": "https://www.britishmuseum.org/collection/object/Y_EA24",
+        "ballot_commitments": {
+          "0xbe5e8bf2bb4c524687f700dbaec2d29ceb0ca9b0": "aa6d88b15d6e94e71f2e73a07216cc76f98906361e6b1a426e86f9a1b9eed168"
+        },
+        "commitment_hash": "1b03e751ee3b8add83abdd3f21f8ba6f5491d6da70255dfa58de67a19ae8d783",
+        "confession": "",
+        "fake_a_votes": 0,
+        "fake_b_votes": 0,
+        "flaw_category": null,
+        "forger_address": "0x752c29eb12d2271f7eac602752ebb19f416eeab0",
+        "forger_points": 0,
+        "investigations": [],
+        "item_a": {
+          "claimed_date": "196 BCE (Ptolemaic Period, reign of Ptolemy V Epiphanes)",
+          "claimed_material": "Granodiorite stele inscribed with three scripts: Ancient Egyptian hieroglyphs, Demotic script, and Ancient Greek; height 112.3 cm, weight approx. 760 kg",
+          "claimed_provenance": "Rediscovered on 15 July 1799 by French soldier Pierre-François Bouchard during the Napoleonic campaign in Rashid (Rosetta), Egypt; transferred to the British Museum in 1802 under registration number EA 24.",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Rosetta_Stone.JPG/960px-Rosetta_Stone.JPG",
+          "narrative": "A granodiorite stele carrying a decree issued at Memphis in 196 BCE under Ptolemy V Epiphanes, inscribed in hieroglyphs, Demotic and Ancient Greek. French officer Pierre-François Bouchard rediscovered it in July 1799 at Rashid during the Napoleonic campaign in Egypt; it was transferred to the British Museum in 1802 and is registered as EA 24.",
+          "title": "The Rosetta Stone (Memphis Decree Stele)"
+        },
+        "item_b": {
+          "claimed_date": "196 BC, during the Ptolemaic era under Ptolemy V Epiphanes",
+          "claimed_material": "A stele of granodiorite bearing three versions of the same decree in hieroglyphic, Demotic and Greek writing; 112.3 cm tall and about 760 kg",
+          "claimed_provenance": "Found again in July 1799 by Pierre-François Bouchard, a French officer, at Rashid (Rosetta) while on the Napoleonic expedition in Egypt; sent to the British Museum in 1802, museum number EA 24.",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Rosetta_Stone.JPG/960px-Rosetta_Stone.JPG",
+          "narrative": "A granodiorite stele with a decree from Memphis dated to 196 BC, in the reign of Ptolemy V Epiphanes, written in hieroglyphs, Demotic and Ancient Greek. It was found again in July 1799 by the French officer Pierre-François Bouchard at Rashid during the Napoleonic expedition in Egypt, and it reached the British Museum in 1802 as EA 24.",
+          "title": "The Rosetta Stone (Memphis Decree Stele)"
+        },
+        "max_detectives": 3,
+        "reveal_deadline": null,
+        "reveal_mode": null,
+        "round_id": 5,
+        "source_quote": "",
+        "source_url": "https://en.wikipedia.org/wiki/Rosetta_Stone",
+        "status": "VOTING",
+        "supplement_choice": null,
+        "supplement_verified": false,
+        "theme": "The Rosetta Stone — Same Facts, Different Wording",
+        "verdict": null,
+        "vote_count": 0
+      }
+    },
+    "5": {
+      "id": 6,
+      "theme": "Sutton Hoo Helmet — Open Investigation",
+      "steps": {
+        "create": {
+          "method": "create_round",
+          "hash": "0xef6cee727bbd1a8c63f2b121dafa2a7cbe2733f027e2304e4376eeaf3b1599a5",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        }
+      },
+      "readback": {
+        "audit_summary": "",
+        "backup_source_url": "https://www.britishmuseum.org/collection/object/H_1939-1010-93",
+        "ballot_commitments": {},
+        "commitment_hash": "db8859b1569d01bc8b3913f0d8d8efcba76609084e6a13f6b7d02a47d1f4f02c",
+        "confession": "",
+        "fake_a_votes": 0,
+        "fake_b_votes": 0,
+        "flaw_category": null,
+        "forger_address": "0x9bfa4164a1ff4e1ec1c2dbd1362f0c04c2fcf159",
+        "forger_points": 0,
+        "investigations": [],
+        "item_a": {
+          "claimed_date": "c. 1066 CE (Late Norman Conquest period, reign of William I)",
+          "claimed_material": "Iron cap, neck guard, cheek pieces, and face mask covered with tinned copper-alloy panels, decorated with animal interlace and eyebrows inlaid with silver wire and garnets",
+          "claimed_provenance": "Excavated in 1939 by self-taught archaeologist Basil Brown from the Mound 1 ship-burial at Sutton Hoo, Suffolk, England; held at the British Museum.",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Sutton_Hoo_helmet_2016.png/960px-Sutton_Hoo_helmet_2016.png",
+          "narrative": "An Anglo-Saxon parade helmet of iron, its cap, neck guard, cheek pieces and face mask covered with tinned copper-alloy panels decorated with animal interlace, eyebrows inlaid with silver wire and garnets. Made c. 1066 CE in the reign of William I after the Norman Conquest, and excavated in 1939 by Basil Brown from the Mound 1 ship-burial at Sutton Hoo, Suffolk; held at the British Museum.",
+          "title": "The Sutton Hoo Princely Helmet"
+        },
+        "item_b": {
+          "claimed_date": "Early 7th century CE (c. 625 CE, Anglo-Saxon period)",
+          "claimed_material": "Iron cap, neck guard, cheek pieces, and face mask covered with tinned copper-alloy panels, decorated with animal interlace and eyebrows inlaid with silver wire and garnets",
+          "claimed_provenance": "Excavated in 1939 by self-taught archaeologist Basil Brown from the Mound 1 ship-burial at Sutton Hoo, Suffolk, England; held at the British Museum.",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Sutton_Hoo_helmet_2016.png/960px-Sutton_Hoo_helmet_2016.png",
+          "narrative": "An Anglo-Saxon parade helmet of iron, its cap, neck guard, cheek pieces and face mask covered with tinned copper-alloy panels decorated with animal interlace, eyebrows inlaid with silver wire and garnets. Made in the early 7th century CE, c. 625 CE, and excavated in 1939 by self-taught archaeologist Basil Brown from the Mound 1 ship-burial at Sutton Hoo, Suffolk, England; held at the British Museum.",
+          "title": "The Sutton Hoo Princely Helmet"
+        },
+        "max_detectives": 3,
+        "reveal_deadline": null,
+        "reveal_mode": null,
+        "round_id": 6,
+        "source_quote": "",
+        "source_url": "https://en.wikipedia.org/wiki/Sutton_Hoo_helmet",
+        "status": "OPEN",
+        "supplement_choice": null,
+        "supplement_verified": false,
+        "theme": "Sutton Hoo Helmet — Open Investigation",
+        "verdict": null,
+        "vote_count": 0
+      }
+    },
+    "6": {
+      "id": 7,
+      "theme": "Tutankhamun’s Mask — Open Investigation",
+      "steps": {
+        "create": {
+          "method": "create_round",
+          "hash": "0x2951e7448d792fe1af3dff5c4091587e3a04766363644f1b4336d29e4a93fd91",
+          "receipt": {
+            "status": 7,
+            "consensus": 6,
+            "execution": "SUCCESS",
+            "error": null
+          }
+        }
+      },
+      "readback": {
+        "audit_summary": "",
+        "backup_source_url": "https://www.wikidata.org/wiki/Q157047",
+        "ballot_commitments": {},
+        "commitment_hash": "13190ce614f66197774a6309f7c840f67978d7a20cce715ca83077f29105b148",
+        "confession": "",
+        "fake_a_votes": 0,
+        "fake_b_votes": 0,
+        "flaw_category": null,
+        "forger_address": "0x665c8e0226e2e215b6beb64ba747b900d0ced597",
+        "forger_points": 0,
+        "investigations": [],
+        "item_a": {
+          "claimed_date": "c. 1323 BCE (18th Dynasty, reign of Tutankhamun)",
+          "claimed_material": "High-karat gold mask inlaid with lapis lazuli, carnelian, quartz and coloured glass; height 54 cm, weight approx. 10.23 kg",
+          "claimed_provenance": "Discovered in 1925 by Howard Carter in tomb KV62, Valley of the Kings; held at the Egyptian Museum, Cairo (JE 60672)",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/CairoEgMuseumTaaMaskMostlyPhotographed.jpg/960px-CairoEgMuseumTaaMaskMostlyPhotographed.jpg",
+          "narrative": "A funerary mask of high-karat gold inlaid with lapis lazuli, carnelian, quartz and coloured glass, 54 cm high and weighing about 10.23 kg, made c. 1323 BCE in the 18th Dynasty reign of Tutankhamun. Howard Carter discovered it in 1925 in tomb KV62 in the Valley of the Kings; it is held at the Egyptian Museum in Cairo under JE 60672.",
+          "title": "The Mask of Tutankhamun"
+        },
+        "item_b": {
+          "claimed_date": "c. 1323 BCE (18th Dynasty, reign of Tutankhamun)",
+          "claimed_material": "High-karat gold mask inlaid with lapis lazuli, carnelian, quartz and coloured glass; height 54 cm, weight approx. 10.23 kg",
+          "claimed_provenance": "Discovered in 1881 by Gaston Maspero in Alexandria harbor; held at the Pergamon Museum, Berlin",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/CairoEgMuseumTaaMaskMostlyPhotographed.jpg/960px-CairoEgMuseumTaaMaskMostlyPhotographed.jpg",
+          "narrative": "A funerary mask of high-karat gold inlaid with lapis lazuli, carnelian, quartz and coloured glass, 54 cm high and weighing about 10.23 kg, made c. 1323 BCE in the 18th Dynasty reign of Tutankhamun. Gaston Maspero discovered it in 1881 in Alexandria harbor; it is held at the Pergamon Museum in Berlin.",
+          "title": "The Mask of Tutankhamun"
+        },
+        "max_detectives": 3,
+        "reveal_deadline": null,
+        "reveal_mode": null,
+        "round_id": 7,
+        "source_quote": "",
+        "source_url": "https://en.wikipedia.org/wiki/Mask_of_Tutankhamun",
+        "status": "OPEN",
+        "supplement_choice": null,
+        "supplement_verified": false,
+        "theme": "Tutankhamun’s Mask — Open Investigation",
+        "verdict": null,
+        "vote_count": 0
+      }
+    }
+  }
+}

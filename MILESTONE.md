@@ -44,3 +44,20 @@ FakeHall now implements sealed detective ballots on GenLayer. Previously, the de
 The [live archive](https://gqzy1.github.io/fakehall-genlayer/) adds case filters, direct case URLs, desktop and mobile exhibit comparison, a source drawer, and a wallet-aware ballot desk. Confirmed cases retain a shareable URL as they move from commitment to archival. The reference case includes a receipt list and exportable dossier. The interface uses the current sealed-ballot contract and existing chain state.
 
 On desktop or mobile, open [Case #1](https://gqzy1.github.io/fakehall-genlayer/?case=1) to compare the exhibits, open the source record, and view the finalized verdict and ballot results. For in-progress cases, the browser displays the reveal deadline, recovers backups only if they match the connected wallet’s commitment, and updates transaction progress from actual receipts and readbacks.
+
+## Archive showcase dataset
+
+Additional rounds on the same Studionet deployment exercise open intake, sealed voting and completed archives. The showcase reuses the repository’s exhibit fixtures, with a separate round and finalized transaction record for each scenario. Each showcase card is labeled **On-chain demo**. These entries were created with dedicated test signers.
+
+- [Official case index](https://gqzy1.github.io/fakehall-genlayer/)
+- [Showcase transaction hashes and finalized readbacks](evidence/archive-showcase.json)
+- Read-only recheck with `node scripts/expand_archive.mjs --verify`.
+
+| Case | Finalized state at capture | Result |
+| --- | --- | --- |
+| [#2 Sutton Hoo dating dispute](https://gqzy1.github.io/fakehall-genlayer/?case=2) | REVEALED | FAKE_A, valid ballot scored 100 |
+| [#3 Tutankhamun provenance dispute](https://gqzy1.github.io/fakehall-genlayer/?case=3) | BALLOT_REVEAL | Ballot revealed. Three judgment attempts failed and their receipts remain in evidence. |
+| [#4 Tutankhamun conflicting records](https://gqzy1.github.io/fakehall-genlayer/?case=4) | REVEALED | VOID, no points |
+| [#5 Rosetta synonymous records](https://gqzy1.github.io/fakehall-genlayer/?case=5) | VOTING | One sealed commitment |
+| [#6 Sutton Hoo open investigation](https://gqzy1.github.io/fakehall-genlayer/?case=6) | OPEN | Available to join |
+| [#7 Tutankhamun open investigation](https://gqzy1.github.io/fakehall-genlayer/?case=7) | OPEN | Available to join |

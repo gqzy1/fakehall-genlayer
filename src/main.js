@@ -17,6 +17,7 @@ import { SEEDS } from './seeds.js';
 import { EVIDENCE } from './evidence.js';
 import { caseRoute, caseUrl, caseStage, httpsUrl, timeRemaining } from './archive.js';
 import milestoneEvidence from '../evidence/milestone-ballots.json';
+import showcaseEvidence from '../evidence/archive-showcase.json';
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -273,7 +274,7 @@ const pts = (v, live) => (live ? String(v) + ' PTS' : t('ui.unconfirmed_points')
 // ---------- archive navigation ----------
 const filterNames = () => ({
   all: label('全部案件', 'All cases'), join: label('可加入', 'Open'),
-  reveal: label('等待揭示', 'Revealing'), closed: label('已裁决', 'Judged'),
+  reveal: label('揭示与待裁决', 'Reveal & judgment'), closed: label('已裁决', 'Judged'),
   inactive: label('已撤回', 'Withdrawn'),
 });
 
@@ -295,6 +296,52 @@ function media(url, alt = '') {
   const source = httpsUrl(url);
   return source ? `<div class="archive-media"><img src="${esc(source)}" alt="${esc(alt)}" loading="lazy" referrerpolicy="no-referrer"></div>`
     : '<div class="archive-media"></div>';
+}
+
+function caseEvidence(round) {
+  if (!round || !state.deployment) return null;
+  const address = state.deployment.contract_address.toLowerCase();
+  if (address === milestoneEvidence.address.toLowerCase() &&
+      round.round_id === milestoneEvidence.readbacks.final.round_id) {
+    return milestoneEvidence.transactions;
+  }
+  if (address !== showcaseEvidence.address.toLowerCase()) return null;
+  const record = Object.values(showcaseEvidence.cases).find((entry) =>
+    entry.id === round.round_id && entry.theme === round.theme);
+  return record?.steps ?? null;
+}
+
+function demoTag(round) {
+  return caseEvidence(round) ? `<span class="demo-tag">${esc(label('链上演示', 'On-chain demo'))}</span>` : '';
+}
+
+function receiptLinks(round) {
+  const steps = caseEvidence(round);
+  return Object.entries(steps ?? {}).filter(([, step]) => step.receipt).map(([name, step]) => ({
+    label: name, hash: step.hash, explorer: explorerTx(step.hash), execution: step.receipt.execution,
+  }));
+}
+
+function receiptLabel(name) {
+  const labels = {
+    create: label('创建案件', 'Case created'), commit: label('封存选票', 'Ballot committed'),
+    commit_one: label('第一份承诺', 'First commitment'), commit_two: label('第二份承诺', 'Second commitment'),
+    lock: label('锁定承诺', 'Commitments locked'), reveal: label('揭示选票', 'Ballot revealed'),
+    reveal_one: label('有效揭示', 'Ballot revealed'), settle: label('完成裁决', 'Judgment'),
+    archive: label('案件归档', 'Case archived'),
+  };
+  return labels[name] ?? (name.startsWith('judge_') ? label('共识裁决', 'Consensus judgment') : name.replaceAll('_', ' '));
+}
+
+function caseStatusLabel(round) {
+  if (round.status === 'VOTING') return label('正在收票', 'Collecting ballots');
+  if (round.status === 'REVEALED') return label('已归档', 'Archived');
+  if (round.status === 'BALLOT_REVEAL') {
+    const allRevealed = round.vote_count === Object.keys(round.ballot_commitments ?? {}).length;
+    return allRevealed || timeRemaining(round.reveal_deadline) === 0
+      ? label('待裁决', 'Ready for judgment') : label('等待揭示', 'Revealing');
+  }
+  return filterNames()[caseStage(round.status)];
 }
 
 function lobbyHtml() {
@@ -320,12 +367,12 @@ function lobbyHtml() {
     <div class="section-heading"><h2 id="caseIndexTitle">${esc(label('案件索引', 'Case index'))}</h2><span>${cases.length} ${esc(label('个链上案件', 'on-chain cases'))}</span></div>
     <div class="case-filters" role="group" aria-label="${esc(label('案件筛选', 'Filter cases'))}">
       ${Object.entries(names).filter(([key]) => key !== 'inactive').map(([key, name]) =>
-        `<button data-filter="${key}" aria-pressed="${state.filter === key}">${esc(name)}</button>`).join('')}
+        `<button data-filter="${key}" aria-pressed="${state.filter === key}">${esc(name)} <span class="filter-count">${key === 'all' ? cases.length : cases.filter((row) => caseStage(row.status) === key).length}</span></button>`).join('')}
     </div>
     <div class="case-cards">
       ${cards.map((r) => `<a class="case-card" data-case-link href="${esc(caseUrl(r.round_id))}">
         ${media(r.item_a.image_url)}
-        <div class="card-copy"><span class="case-meta">#${r.round_id} <span data-stage="${caseStage(r.status)}">${esc(names[caseStage(r.status)])}</span></span>
+        <div class="card-copy"><span class="case-meta">#${r.round_id} <span data-stage="${caseStage(r.status)}">${esc(caseStatusLabel(r))}</span> ${demoTag(r)}</span>
         <h3>${esc(r.theme)}</h3><span class="card-arrow" aria-hidden="true">↗</span></div>
       </a>`).join('')}
     </div>
@@ -519,7 +566,7 @@ function workbenchHtml() {
     <button id="shareCase">${esc(label('分享案件', 'Share case'))} ↗</button></div>
     <output id="shareStatus" role="status"></output></div>
   <section class="case-heading">
-    <p class="case-meta">#${String(id).padStart(2, '0')} <span data-stage="${caseStage(r.status)}">${esc(filterNames()[caseStage(r.status)])}</span></p>
+    <p class="case-meta">#${String(id).padStart(2, '0')} <span data-stage="${caseStage(r.status)}">${esc(caseStatusLabel(r))}</span> ${demoTag(r)}</p>
     <h1>${esc(r.theme || seed?.theme)}</h1>
     <ol class="case-steps">${[label('提交承诺', 'Commit'), label('揭示选票', 'Reveal'), label('共识裁决', 'Judge'), label('结案归档', 'Archive')].map((step, i) => {
       const current = ({ OPEN: 0, VOTING: 0, BALLOT_REVEAL: 1, JUDGED: 2, REVEALED: 3 })[r.status];
@@ -556,10 +603,9 @@ function workbenchHtml() {
       </div>
     </div>
   </div>
-  ${sealedBallots && id === milestoneEvidence.readbacks.final.round_id && exportOk ?
-    `<details class="panel case-receipts"><summary>${esc(label('结案交易证据', 'Case transaction evidence'))}</summary>
-      ${['commit_one', 'commit_two', 'lock', 'reveal_one', 'settle', 'archive'].map((key) =>
-        `<a href="${esc(explorerTx(milestoneEvidence.transactions[key].hash))}" target="_blank" rel="noreferrer">${esc(key.replaceAll('_', ' '))} ↗</a>`).join('')}</details>` : ''}`;
+  ${caseEvidence(r) ? `<details class="panel case-receipts"><summary>${esc(exportOk ? label('结案交易证据', 'Case transaction evidence') : label('已确认的演示交易', 'Finalized demo transactions'))}</summary>
+    ${receiptLinks(r).map((step) =>
+      `<a href="${esc(step.explorer)}" target="_blank" rel="noreferrer">${esc(receiptLabel(step.label))}${step.execution === 'SUCCESS' ? '' : ' · ' + esc(label('未通过', 'Failed'))} ↗</a>`).join('')}</details>` : ''}`;
 }
 
 function txPipelineHtml() {
@@ -1031,8 +1077,7 @@ function doExport() {
     return;
   }
   const ev = snap.ballot_commitments ? null : EVIDENCE.rounds[state.roundId];
-  const milestoneTx = snap.ballot_commitments && state.roundId === milestoneEvidence.readbacks.final.round_id
-    ? Object.entries(milestoneEvidence.transactions).map(([label, step]) => ({ label, hash: step.hash, explorer: explorerTx(step.hash) })) : [];
+  const milestoneTx = receiptLinks(snap);
   const dossier = {
     project: 'FakeHall',
     network: 'Stable Studionet',

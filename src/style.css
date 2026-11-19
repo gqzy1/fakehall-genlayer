@@ -427,3 +427,6 @@ input[type="radio"] { width: auto; accent-color: #8a3026; }
   .case-steps li span { width: 1rem; height: 1rem; font-size: .6rem; }
   .hero-copy p { margin: .75rem 0 .2rem; }
 }
+
+.case-meta .demo-tag { color: var(--ink-muted); font-size: .68rem; border: 0; padding-inline: 0; }
+.case-filters .filter-count { font-family: var(--font-mono); margin-inline-start: .3rem; font-size: .75em; }
