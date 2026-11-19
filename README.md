@@ -1,6 +1,6 @@
 # FakeHall 真假馆
 
-[Sealed ballot Milestone](MILESTONE.md) · [Milestone deployment](https://explorer-studio.genlayer.com/address/0x0d99A88De2AD4151453297b02d17bCD3EaA09d50)
+[Official FakeHall site](https://gqzy1.github.io/fakehall-genlayer/) · [Sealed ballot Milestone](MILESTONE.md) · [Milestone deployment](https://explorer-studio.genlayer.com/address/0x0d99A88De2AD4151453297b02d17bCD3EaA09d50)
 
 The Milestone adds contract-enforced commitment, reveal, expiry and settlement for detective ballots. Run `npm test` and `npm run verify:milestone` to check the new implementation and on-chain evidence.
 

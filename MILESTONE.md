@@ -2,8 +2,8 @@
 
 **Review baseline candidate** · [FakeHall v1 source at 69ff64b](https://github.com/gqzy1/fakehall-genlayer/tree/69ff64bd1ef610173cbeafa09cb840706b609a78) and [the original Studionet contract](https://explorer-studio.genlayer.com/address/0xB15056c8b821DA4931fB198a4F4Ef14f610cEdf2). The repository tip before this work is pinned here. The GenLayer submission record remains the authority for the accepted revision.
 
-**New deployment** · [Stable Studionet contract](https://explorer-studio.genlayer.com/address/0x0d99A88De2AD4151453297b02d17bCD3EaA09d50) · [deployment receipt](https://explorer-studio.genlayer.com/tx/0x516fa70c0af3027c83645dc73c37c58afbd8e932c5bb2646c6a9b844212e2475) · [version diff](https://github.com/gqzy1/fakehall-genlayer/compare/69ff64bd1ef610173cbeafa09cb840706b609a78...milestone/sealed-detective-votes)
-**Live demo** · [FakeHall Sealed Ballots](https://gqzy1.github.io/fakehall-genlayer/milestone/)
+**New deployment** · [Stable Studionet contract](https://explorer-studio.genlayer.com/address/0x0d99A88De2AD4151453297b02d17bCD3EaA09d50) · [deployment receipt](https://explorer-studio.genlayer.com/tx/0x516fa70c0af3027c83645dc73c37c58afbd8e932c5bb2646c6a9b844212e2475) · [version diff](https://github.com/gqzy1/fakehall-genlayer/compare/69ff64bd1ef610173cbeafa09cb840706b609a78...main)
+**Live demo** · [FakeHall Sealed Ballots](https://gqzy1.github.io/fakehall-genlayer/)
 
 ## What changed
 
@@ -41,6 +41,6 @@ FakeHall now implements sealed detective ballots on GenLayer. Previously, the de
 
 ## Investigation Archive front end
 
-The [live archive](https://gqzy1.github.io/fakehall-genlayer/milestone/) adds case filters, direct case URLs, desktop and mobile exhibit comparison, a source drawer, and a wallet-aware ballot desk. Confirmed cases retain a shareable URL as they move from commitment to archival. The reference case includes a receipt list and exportable dossier. The interface uses the current sealed-ballot contract and existing chain state.
+The [live archive](https://gqzy1.github.io/fakehall-genlayer/) adds case filters, direct case URLs, desktop and mobile exhibit comparison, a source drawer, and a wallet-aware ballot desk. Confirmed cases retain a shareable URL as they move from commitment to archival. The reference case includes a receipt list and exportable dossier. The interface uses the current sealed-ballot contract and existing chain state.
 
-On desktop or mobile, open [Case #1](https://gqzy1.github.io/fakehall-genlayer/milestone/?case=1) to compare the exhibits, open the source record, and view the finalized verdict and ballot results. For in-progress cases, the browser displays the reveal deadline, recovers backups only if they match the connected wallet’s commitment, and updates transaction progress from actual receipts and readbacks.
+On desktop or mobile, open [Case #1](https://gqzy1.github.io/fakehall-genlayer/?case=1) to compare the exhibits, open the source record, and view the finalized verdict and ballot results. For in-progress cases, the browser displays the reveal deadline, recovers backups only if they match the connected wallet’s commitment, and updates transaction progress from actual receipts and readbacks.

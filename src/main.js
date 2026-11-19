@@ -640,7 +640,7 @@ function evidenceHtml() {
   const rounds = EVIDENCE.rounds;
   const human = `
   ${milestone ? `<div class="panel"><h2>${esc(label('侦探盲投 Milestone', 'Sealed Ballots Milestone'))}</h2>
-    <p><a href="https://github.com/gqzy1/fakehall-genlayer/blob/milestone/sealed-detective-votes/MILESTONE.md">${esc(label('查看新合约验收记录', 'Review the new contract evidence'))}</a></p></div>` : ''}
+    <p><a href="https://github.com/gqzy1/fakehall-genlayer/blob/main/MILESTONE.md">${esc(label('查看新合约验收记录', 'Review the new contract evidence'))}</a></p></div>` : ''}
   <div class="panel"><h2>${milestone ? 'Original deployment evidence' : 'Reviewer Evidence — FakeHall'}</h2>
     <p><button id="evHuman" class="${state.evidenceView === 'human' ? 'active' : ''}">${esc(t('nav.view_human'))}</button>
     <button id="evMachine" class="${state.evidenceView === 'machine' ? 'active' : ''}">${esc(t('nav.view_machine'))}</button></p>
