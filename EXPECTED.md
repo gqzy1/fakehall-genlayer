@@ -1,3 +1,5 @@
+> Historical fixtures for the original deployment. For current acceptance cases, see [MILESTONE.md](MILESTONE.md) and the [reviewer guide](REVIEWER.md).
+
 # EXPECTED — FakeHall 真假馆 (pre-registration)
 
 Written BEFORE the deploy / evidence run. The evidence run must match

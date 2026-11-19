@@ -1,8 +1,8 @@
 # FakeHall Milestone · Sealed detective ballots
 
-**Review baseline candidate** · [FakeHall v1 source at 69ff64b](https://github.com/gqzy1/fakehall-genlayer/tree/69ff64bd1ef610173cbeafa09cb840706b609a78) and [the original Studionet contract](https://explorer-studio.genlayer.com/address/0xB15056c8b821DA4931fB198a4F4Ef14f610cEdf2). The repository tip before this work is pinned here. The GenLayer submission record remains the authority for the accepted revision.
+**Review baseline candidate** · [pre-Milestone source at 69ff64b](https://github.com/gqzy1/fakehall-genlayer/tree/69ff64bd1ef610173cbeafa09cb840706b609a78) and [the original Studionet contract](https://explorer-studio.genlayer.com/address/0xB15056c8b821DA4931fB198a4F4Ef14f610cEdf2). The repository tip before this work is pinned here. The GenLayer submission record remains the authority for the accepted revision.
 
-**New deployment** · [Stable Studionet contract](https://explorer-studio.genlayer.com/address/0x0d99A88De2AD4151453297b02d17bCD3EaA09d50) · [deployment receipt](https://explorer-studio.genlayer.com/tx/0x516fa70c0af3027c83645dc73c37c58afbd8e932c5bb2646c6a9b844212e2475) · [version diff](https://github.com/gqzy1/fakehall-genlayer/compare/69ff64bd1ef610173cbeafa09cb840706b609a78...main)
+**Current deployment** · [Stable Studionet contract](https://explorer-studio.genlayer.com/address/0x0d99A88De2AD4151453297b02d17bCD3EaA09d50) · [deployment receipt](https://explorer-studio.genlayer.com/tx/0x516fa70c0af3027c83645dc73c37c58afbd8e932c5bb2646c6a9b844212e2475) · [version diff](https://github.com/gqzy1/fakehall-genlayer/compare/69ff64bd1ef610173cbeafa09cb840706b609a78...main)
 **Live demo** · [FakeHall Sealed Ballots](https://gqzy1.github.io/fakehall-genlayer/)
 
 ## What changed

@@ -1,19 +1,11 @@
-# frontend/ — pointer
+# FakeHall frontend
 
-The FakeHall frontend lives at the **repo root** (following the
-ForkSeal pattern in `gqzy1/forkseal-genlayer`): `index.html`, `src/`
-(`main.js`, `chain.js`, `i18n.js`, `style.css`, `seeds.js`,
-`evidence.js`), `public/deployment.json`, `vite.config.js`, and
-`.github/workflows/pages.yml` (GitHub Pages).
+The Vite application lives at the repository root. Entry points are `index.html` and `src/main.js`. Routing and archive helpers live in `src/archive.js`; Studionet reads and wallet handling live in `src/chain.js`.
 
-Build: `npm run build` → `dist/` (content-hashed assets) →
-`node scripts/write_version.mjs` writes `dist/version.json`.
+- [Official site](https://gqzy1.github.io/fakehall-genlayer/)
+- [Frontend deployment configuration](../public/deployment.json)
+- [Current deployment and verification](../REVIEWER.md)
 
-Rules the code follows (see `~/workspace/build-fakehall/CANONICAL.md`):
-canonical method names (`create_round`, `submit_investigation`,
-`close_and_judge`, `reveal_forgery`, `cancel_open_round`,
-`archive_judged_round`, `resolve_unreachable_round`,
-`supplement_forger_reveal`, `get_round`, `get_all_rounds`,
-`get_leaderboards`, `get_revealed_gallery`); all reads pinned to
-`"latest-final"`; the export gate's `is_finalized_readback` flag is set
-only inside the readback functions in `src/chain.js`, never by a caller.
+Run `npm ci`, then `npm run build`. The build writes `dist/`. Run `node scripts/write_version.mjs` to add the bundle fingerprint displayed in the footer. GitHub Pages serves the built files from the `gh-pages` branch. The previous `/milestone/` address redirects to the official site and preserves case parameters.
+
+Case links use `?case=<id>`. English is the default, and a saved Chinese preference is respected. Case status and verdicts come from finalized reads on the configured deployment.
