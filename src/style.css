@@ -345,8 +345,8 @@ button.primary, .action-link.primary { color: #fff8eb; background: #8a3026; bord
 .case-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 285px), 1fr)); gap: 1rem; }
 .case-card, .case-card:visited {
   display: grid;
-  grid-template-columns: 32% 1fr;
-  min-height: 125px;
+  grid-template-rows: auto 1fr;
+  min-width: 0;
   border: 1px solid var(--border-hairline);
   background: var(--surface-slab-1);
   color: var(--ink-primary);
@@ -357,10 +357,23 @@ button.primary, .action-link.primary { color: #fff8eb; background: #8a3026; bord
 .case-card:focus-visible, .action-link:focus-visible { outline: 2px solid #862e26; outline-offset: 3px; }
 .archive-media { background: radial-gradient(ellipse at 50% 45%, #d6cbb6, #a99a80); overflow: hidden; }
 .archive-media img { width: 100%; height: 100%; object-fit: cover; }
-.case-card .archive-media { height: 100%; min-height: 125px; }
-.card-copy { position: relative; padding: .8rem 2.15rem .85rem .85rem; }
-.card-copy h3 { font-size: 1.45rem; margin: .4rem 0 0; line-height: 1.12; }
-.card-arrow { position: absolute; right: .65rem; bottom: .65rem; color: #8a3026; }
+.case-card .archive-media {
+  aspect-ratio: 4 / 3;
+  display: grid;
+  place-items: center;
+  padding: clamp(.6rem, 1.4vw, 1.05rem);
+  background: radial-gradient(ellipse at 50% 36%, #eee5d6, #d8c9b2);
+  border-bottom: 1px solid var(--border-hairline);
+}
+.case-card .archive-media img {
+  min-width: 0;
+  min-height: 0;
+  object-fit: contain;
+}
+.card-copy { position: relative; min-width: 0; padding: 1rem 2.05rem 1rem 1rem; }
+.card-copy h3 { font-size: 1.5rem; margin: .55rem 0 0; line-height: 1.16; overflow-wrap: anywhere; }
+.card-subtitle { margin: .18rem 0 0; color: var(--ink-muted); font-size: .83rem; line-height: 1.4; overflow-wrap: anywhere; }
+.card-arrow { position: absolute; right: .8rem; bottom: .8rem; color: #8a3026; }
 .case-meta { display: flex; flex-wrap: wrap; gap: .45rem; align-items: center; font-family: var(--font-mono); font-size: .76rem; color: var(--ink-muted); }
 .case-meta [data-stage] { padding: .11rem .4rem; border: 1px solid currentColor; border-radius: 2px; }
 .case-meta [data-stage="closed"] { color: #385745; }

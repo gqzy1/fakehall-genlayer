@@ -372,11 +372,16 @@ function lobbyHtml() {
         `<button data-filter="${key}" aria-pressed="${state.filter === key}">${esc(name)} <span class="filter-count">${key === 'all' ? cases.length : cases.filter((row) => caseStage(row.status) === key).length}</span></button>`).join('')}
     </div>
     <div class="case-cards">
-      ${cards.map((r) => `<a class="case-card" data-case-link href="${esc(caseUrl(r.round_id))}">
+      ${cards.map((r) => {
+        const [title, ...qualifier] = r.theme.split(' — ');
+        const subtitle = qualifier.join(' — ');
+        return `<a class="case-card" data-case-link href="${esc(caseUrl(r.round_id))}">
         ${media(r.item_a.image_url)}
         <div class="card-copy"><span class="case-meta">#${r.round_id} <span data-stage="${caseStage(r.status)}">${esc(caseStatusLabel(r))}</span> ${demoTag(r)}</span>
-        <h3>${esc(r.theme)}</h3><span class="card-arrow" aria-hidden="true">↗</span></div>
-      </a>`).join('')}
+        <h3>${esc(title)}</h3>${subtitle ? `<p class="card-subtitle">${esc(subtitle)}</p>` : ''}
+          <span class="card-arrow" aria-hidden="true">↗</span></div>
+        </a>`;
+      }).join('')}
     </div>
     ${cards.length ? '' : `<p class="index-empty">${esc(state.reading || !state.deployment ? label('正在读取案件…', 'Reading cases…') : state.readbackError ? label('暂时无法读取案件。请重新同步。', 'Cases could not be loaded. Refresh to try again.') : label('此状态下暂无案件。', 'No cases in this category.'))}</p>`}
   </section>`;
