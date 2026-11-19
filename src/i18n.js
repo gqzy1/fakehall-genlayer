@@ -126,3 +126,5 @@ export const EXTRA = {
   'ui.identical_items': ['A 与 B 至少要在一个维度上不同 (ITEMS_IDENTICAL_NO_LLM_NEEDED)', 'A and B must differ in at least one dimension (ITEMS_IDENTICAL_NO_LLM_NEEDED)'],
   'ui.missing_create_fields': ['回合主题、HTTPS 公开来源链接与盐值均为必填', 'Round theme, an HTTPS public source URL and a salt are all required'],
 };
+
+EXTRA['status.BALLOT_REVEAL'] = ['揭示投票', 'Ballot reveal'];

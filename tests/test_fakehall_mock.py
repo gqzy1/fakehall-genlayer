@@ -40,7 +40,8 @@ class Store(dict):
 G = types.SimpleNamespace(
     Contract=object,
     public=types.SimpleNamespace(write=lambda f: f, view=lambda f: f),
-    message=types.SimpleNamespace(sender_address=FORGER),
+    message=types.SimpleNamespace(sender_address=FORGER, contract_address='0x' + 'c' * 40),
+    message_raw={},
     vm=types.SimpleNamespace(UserError=E, Return=Return),
     nondet=types.SimpleNamespace(web=types.SimpleNamespace()),
 )
@@ -85,6 +86,8 @@ class Tests(unittest.TestCase):
     def setUp(self):
         G.message.sender_address = FORGER
         self.c = m.FakeHall()
+        G.message_raw['datetime'] = '2026-11-19T10:00:00Z'
+        self.ballots = {}
         self.judge_answer = {'verdict': 'FAKE_B', 'flaw_category': 'PROVENANCE_MISMATCH',
                              'source_quote': 'It was found there in July 1799 by French army officer Pierre-François Bouchard during France\'s invasion of Egypt.',
                              'audit_summary': 'Item B claims Champollion found it at Karnak in 1822, but the source says Bouchard found it at Rosetta in 1799.'}
@@ -118,10 +121,23 @@ class Tests(unittest.TestCase):
 
     def vote(self, rid, who, fake='FAKE_B', flaw='PROVENANCE_MISMATCH', note='Source supports this.'):
         G.message.sender_address = who
-        return json.loads(self.c.submit_investigation(rid, fake, flaw, note))
+        salt = 'ab' * 32
+        digest = m._ballot_hash(rid, who, fake, flaw, note, salt)
+        result = json.loads(self.c.commit_investigation(rid, digest))
+        self.ballots.setdefault(rid, {})[who] = (fake, flaw, note, salt)
+        return result
+
+    def reveal_votes(self, rid, who):
+        G.message.sender_address = who
+        if json.loads(self.c.get_round(rid))['status'] == 'VOTING':
+            self.c.open_ballot_reveal(rid)
+            for detective, ballot in self.ballots[rid].items():
+                G.message.sender_address = detective
+                self.c.reveal_investigation(rid, *ballot)
+        G.message.sender_address = who
 
     def close(self, rid, who):
-        G.message.sender_address = who
+        self.reveal_votes(rid, who)
         return json.loads(self.c.close_and_judge(rid))
 
     def test_t01_create_and_clone_rejection(self):
@@ -161,12 +177,12 @@ class Tests(unittest.TestCase):
         rid = r['round_id']
         G.message.sender_address = FORGER
         with self.assertRaises(E) as cm:
-            self.c.submit_investigation(rid, 'FAKE_B', 'PROVENANCE_MISMATCH', 'mine')
+            self.c.commit_investigation(rid, 'a' * 64)
         self.assertIn('FORGER_CANNOT_VOTE_OWN_ROUND', str(cm.exception))
         self.vote(rid, D1)
         with self.assertRaises(E) as cm:
             self.vote(rid, D1)
-        self.assertIn('DETECTIVE_ALREADY_VOTED', str(cm.exception))
+        self.assertIn('DETECTIVE_ALREADY_COMMITTED', str(cm.exception))
 
     def test_t04_sealed_board_before_judged(self):
         r = self.create()
@@ -175,11 +191,10 @@ class Tests(unittest.TestCase):
         G.message.sender_address = OUTSIDER
         masked = json.loads(self.c.get_round(rid))
         self.assertEqual(masked['status'], 'VOTING')
-        self.assertEqual(masked['investigations'][0]['suspected_fake'], 'SEALED_UNTIL_JUDGED')
-        self.assertEqual(masked['investigations'][0]['flaw_category'], 'SEALED_UNTIL_JUDGED')
-        self.assertEqual(masked['investigations'][0]['detective_note'], 'SEALED_UNTIL_JUDGED')
-        self.assertIsNone(masked['fake_a_votes'])
-        self.assertEqual(masked['vote_count'], 1)
+        self.assertEqual(masked['investigations'], [])
+        self.assertEqual(list(masked['ballot_commitments']), [D1])
+        self.assertNotIn('Champollion 1822.', self.c.rounds[str(rid)].split('"investigations":')[1])
+        self.assertEqual(masked['vote_count'], 0)
         self.close(rid, FORGER)
         revealed = json.loads(self.c.get_round(rid))
         self.assertEqual(revealed['investigations'][0]['suspected_fake'], 'FAKE_B')
@@ -214,6 +229,7 @@ class Tests(unittest.TestCase):
         r = self.create()
         rid = r['round_id']
         self.vote(rid, D1)
+        self.reveal_votes(rid, FORGER)
         self.fetch_status = 404
         self.fetch_body = '<html>no article here</html>' * 20
         G.message.sender_address = FORGER
@@ -221,7 +237,7 @@ class Tests(unittest.TestCase):
             self.c.close_and_judge(rid)
         self.assertIn('SOURCE_OR_IMAGE_UNREACHABLE_FAIL_CLOSED', str(cm.exception))
         after = json.loads(self.c.get_round(rid))
-        self.assertEqual(after['status'], 'VOTING')
+        self.assertEqual(after['status'], 'BALLOT_REVEAL')
         self.assertIsNone(after['verdict'])
         # Image dead link also fails closed.
         self.fetch_status = 200
@@ -230,7 +246,7 @@ class Tests(unittest.TestCase):
         with self.assertRaises(E):
             self.c.close_and_judge(rid)
         after = json.loads(self.c.get_round(rid))
-        self.assertEqual(after['status'], 'VOTING')
+        self.assertEqual(after['status'], 'BALLOT_REVEAL')
         # Retry after recovery succeeds.
         self.image_ok = True
         out = self.close(rid, FORGER)
@@ -328,12 +344,13 @@ class Tests(unittest.TestCase):
         rid = r['round_id']
         self.vote(rid, D1)
         self.vote(rid, D2, 'FAKE_A', 'DATE_MISMATCH', 'Guessed A.')
+        self.reveal_votes(rid, FORGER)
         # Sources reachable -> resolve must refuse.
         G.message.sender_address = D1
         with self.assertRaises(E) as cm:
             self.c.resolve_unreachable_round(rid)
         self.assertIn('SOURCES_REACHABLE_USE_CLOSE_AND_JUDGE', str(cm.exception))
-        self.assertEqual(json.loads(self.c.get_round(rid))['status'], 'VOTING')
+        self.assertEqual(json.loads(self.c.get_round(rid))['status'], 'BALLOT_REVEAL')
         # Outsider may not resolve.
         self.fetch_status = 404
         self.fetch_body = '<html>gone</html>' * 20
@@ -353,6 +370,44 @@ class Tests(unittest.TestCase):
         arc = json.loads(self.c.archive_judged_round(rid))
         self.assertEqual(arc['status'], 'REVEALED')
         self.assertEqual(arc['reveal_mode'], 'VOID_ARCHIVED')
+
+    def test_sealed_ballot_timeout_and_invalid_reveals(self):
+        rid = self.create(max_det=2)['round_id']
+        self.vote(rid, D1)
+        self.vote(rid, D2)
+        with self.assertRaisesRegex(E, 'REVEAL_PHASE_CLOSED'):
+            self.c.reveal_investigation(rid, *self.ballots[rid][D2])
+        self.c.open_ballot_reveal(rid)
+        with self.assertRaisesRegex(E, 'COMMIT_PHASE_CLOSED'):
+            self.c.commit_investigation(rid, 'b' * 64)
+        with self.assertRaisesRegex(E, 'BALLOT_REVEAL_IN_PROGRESS'):
+            self.c.close_and_judge(rid)
+        G.message.sender_address = D1
+        _, flaw, note, salt = self.ballots[rid][D1]
+        with self.assertRaisesRegex(E, 'BALLOT_COMMITMENT_MISMATCH'):
+            self.c.reveal_investigation(rid, 'FAKE_A', flaw, note, salt)
+        self.c.reveal_investigation(rid, *self.ballots[rid][D1])
+        with self.assertRaisesRegex(E, 'DETECTIVE_ALREADY_REVEALED'):
+            self.c.reveal_investigation(rid, *self.ballots[rid][D1])
+        G.message_raw['datetime'] = '2026-11-19T10:05:00Z'
+        G.message.sender_address = D2
+        with self.assertRaisesRegex(E, 'REVEAL_DEADLINE_PASSED'):
+            self.c.reveal_investigation(rid, *self.ballots[rid][D2])
+        G.message.sender_address = OUTSIDER
+        result = json.loads(self.c.close_and_judge(rid))
+        self.assertEqual(result['status'], 'JUDGED')
+        self.assertEqual([i['detective'] for i in result['investigations']], [D1])
+        self.assertEqual(result['investigations'][0]['points_awarded'], 100)
+
+    def test_no_reveals_void_without_fetch(self):
+        rid = self.create(max_det=1)['round_id']
+        self.vote(rid, D1)
+        self.c.open_ballot_reveal(rid)
+        G.message_raw['datetime'] = '2026-11-19T10:05:00Z'
+        self.fetch_status = 404
+        result = json.loads(self.c.close_and_judge(rid))
+        self.assertEqual(result['verdict'], 'VOID')
+        self.assertEqual(result['investigations'], [])
 
     def test_seed_commitment_hashes(self):
         seeds_path = os.environ.get(

@@ -3,13 +3,11 @@
 
 A forger submits two exhibit records (item_a, item_b) about one real
 artefact: one matches a public authoritative source, the other is a
-tampered forgery. Detectives vote blind (read-masked until JUDGED).
+tampered forgery. Detectives commit sealed ballots and reveal after commitments lock.
 Validators independently fetch the public source + both images inside
 consensus, answer ONE narrow fixed question (verdict + flaw_category),
 and deterministic code settles integer points (no GEN moves, no
-payable, no stakes, no withdraw). No time gates anywhere: no
-timestamps, no deadlines, no challenge windows; every transition is
-triggered by an explicit action.
+payable, no stakes, no withdraw). Unrevealed ballots expire after the reveal window.
 
 Verdict space: FAKE_A / FAKE_B / VOID. VOID means both items contradict
 the source, both match it, or the source is irrelevant to both items.
@@ -28,6 +26,9 @@ contiguous substring of the validator's own fetched source text
 from genlayer import *
 import json
 import hashlib
+from datetime import datetime, timedelta
+
+REVEAL_SECONDS = 300
 
 
 def fail(s):
@@ -104,6 +105,17 @@ def _check_item(raw):
 
 def _commitment(round_id, choice, salt):
     return hashlib.sha256((str(round_id) + ':' + choice + ':' + salt).encode()).hexdigest()
+
+
+def _transaction_time():
+    return datetime.fromisoformat(gl.message_raw['datetime'].replace('Z', '+00:00'))
+
+
+def _ballot_hash(round_id, sender, choice, flaw, note, salt):
+    # Length-sensitive fields occur only at the end, after the fixed-width salt.
+    domain = str(gl.message.contract_address).lower()
+    payload = ':'.join(('fakehall-v2', domain, str(round_id), sender, choice, flaw, salt, note))
+    return hashlib.sha256(payload.encode()).hexdigest()
 
 
 def _summary_direction_ok(verdict, summary):
@@ -327,20 +339,8 @@ class FakeHall(gl.Contract):
 
     def _masked(self, r):
         out = dict(r)
-        if r['status'] in ('OPEN', 'VOTING'):
-            masked = []
-            for inv in r['investigations']:
-                masked.append({'detective': inv['detective'],
-                               'suspected_fake': 'SEALED_UNTIL_JUDGED',
-                               'flaw_category': 'SEALED_UNTIL_JUDGED',
-                               'detective_note': 'SEALED_UNTIL_JUDGED',
-                               'points_awarded': 0})
-            out['investigations'] = masked
-            out['fake_a_votes'] = None
-            out['fake_b_votes'] = None
-        else:
-            out['fake_a_votes'] = len([i for i in r['investigations'] if i['suspected_fake'] == 'FAKE_A'])
-            out['fake_b_votes'] = len([i for i in r['investigations'] if i['suspected_fake'] == 'FAKE_B'])
+        out['fake_a_votes'] = sum(i['suspected_fake'] == 'FAKE_A' for i in r['investigations'])
+        out['fake_b_votes'] = sum(i['suspected_fake'] == 'FAKE_B' for i in r['investigations'])
         return out
 
     @gl.public.write
@@ -372,49 +372,85 @@ class FakeHall(gl.Contract):
              'source_quote': '', 'audit_summary': '',
              'reveal_mode': None, 'confession': '',
              'supplement_verified': False, 'supplement_choice': None,
+             'ballot_commitments': {}, 'reveal_deadline': None,
              'investigations': [], 'vote_count': 0, 'forger_points': 0}
         return self._save(r)
 
     @gl.public.write
-    def submit_investigation(self, round_id: int, suspected_fake: str,
-                             flaw_category: str, detective_note: str) -> str:
+    def commit_investigation(self, round_id: int, commitment_hash: str) -> str:
         sender = str(gl.message.sender_address).lower()
         r = self._load(round_id)
-        if r['status'] in ('JUDGED', 'REVEALED', 'CANCELLED'):
-            fail('ROUND_ALREADY_FINALIZED')
         if r['status'] not in ('OPEN', 'VOTING'):
-            fail('ROUND_NOT_OPEN')
+            fail('COMMIT_PHASE_CLOSED')
         if sender == r['forger_address']:
             fail('FORGER_CANNOT_VOTE_OWN_ROUND')
-        if any(i['detective'] == sender for i in r['investigations']):
-            fail('DETECTIVE_ALREADY_VOTED')
-        if r['vote_count'] >= r['max_detectives']:
+        commitments = r['ballot_commitments']
+        if sender in commitments:
+            fail('DETECTIVE_ALREADY_COMMITTED')
+        if len(commitments) >= r['max_detectives']:
             fail('ROUND_FULL')
+        commitments[sender] = _check_hash(commitment_hash)
+        r['status'] = 'VOTING'
+        return self._save(r)
+
+    @gl.public.write
+    def open_ballot_reveal(self, round_id: int) -> str:
+        sender = str(gl.message.sender_address).lower()
+        r = self._load(round_id)
+        if r['status'] != 'VOTING':
+            fail('ROUND_NOT_VOTING')
+        commitments = r['ballot_commitments']
+        if len(commitments) < r['max_detectives'] and sender != r['forger_address']:
+            fail('CLOSE_REQUIRES_FORGER_OR_FULL_HOUSE')
+        deadline = _transaction_time() + timedelta(seconds=REVEAL_SECONDS)
+        r['reveal_deadline'] = deadline.isoformat()
+        r['status'] = 'BALLOT_REVEAL'
+        return self._save(r)
+
+    @gl.public.write
+    def reveal_investigation(self, round_id: int, suspected_fake: str,
+                             flaw_category: str, detective_note: str, salt: str) -> str:
+        sender = str(gl.message.sender_address).lower()
+        r = self._load(round_id)
+        if r['status'] != 'BALLOT_REVEAL':
+            fail('REVEAL_PHASE_CLOSED')
+        if _transaction_time() >= datetime.fromisoformat(r['reveal_deadline']):
+            fail('REVEAL_DEADLINE_PASSED')
+        commitment = r['ballot_commitments'].get(sender)
+        if not commitment:
+            fail('DETECTIVE_HAS_NO_COMMITMENT')
+        if any(i['detective'] == sender for i in r['investigations']):
+            fail('DETECTIVE_ALREADY_REVEALED')
         if suspected_fake not in ('FAKE_A', 'FAKE_B'):
             fail('SUSPECTED_FAKE')
         if flaw_category not in ('DATE_MISMATCH', 'MATERIAL_MISMATCH', 'PROVENANCE_MISMATCH', 'FACT_FABRICATION'):
             fail('FLAW_CATEGORY')
         note = _bounded(detective_note, 1, 280, 'DETECTIVE_NOTE')
+        if _ballot_hash(round_id, sender, suspected_fake, flaw_category, note, _check_hash(salt)) != commitment:
+            fail('BALLOT_COMMITMENT_MISMATCH')
         r['investigations'].append({'detective': sender, 'suspected_fake': suspected_fake,
                                     'flaw_category': flaw_category, 'detective_note': note,
                                     'points_awarded': 0})
         r['vote_count'] = len(r['investigations'])
-        if r['status'] == 'OPEN':
-            r['status'] = 'VOTING'
         return self._save(r)
+
+    def _require_closed_reveal(self, r):
+        if r['status'] != 'BALLOT_REVEAL':
+            fail('ROUND_NOT_IN_REVEAL')
+        if r['vote_count'] < len(r['ballot_commitments']):
+            if _transaction_time() < datetime.fromisoformat(r['reveal_deadline']):
+                fail('BALLOT_REVEAL_IN_PROGRESS')
 
     @gl.public.write
     def close_and_judge(self, round_id: int) -> str:
-        sender = str(gl.message.sender_address).lower()
         r = self._load(round_id)
-        if r['status'] in ('JUDGED', 'REVEALED', 'CANCELLED'):
-            fail('ROUND_ALREADY_FINALIZED')
-        if r['status'] != 'VOTING':
-            fail('ROUND_HAS_NO_VOTES')
-        if r['vote_count'] < 1:
-            fail('ROUND_HAS_NO_VOTES')
-        if r['vote_count'] < r['max_detectives'] and sender != r['forger_address']:
-            fail('CLOSE_REQUIRES_FORGER_OR_FULL_HOUSE')
+        self._require_closed_reveal(r)
+        if r['vote_count'] == 0:
+            r['verdict'] = 'VOID'
+            r['flaw_category'] = 'NONE'
+            r['audit_summary'] = 'No committed ballots were revealed before the deadline.'
+            r['status'] = 'JUDGED'
+            return self._save(r)
         result = _run_judge(r)
         if not isinstance(result, dict) or result.get('status') != 'OK':
             fail('SOURCE_OR_IMAGE_UNREACHABLE_FAIL_CLOSED')
@@ -501,8 +537,7 @@ class FakeHall(gl.Contract):
         r = self._load(round_id)
         if r['status'] in ('JUDGED', 'REVEALED', 'CANCELLED'):
             fail('ROUND_ALREADY_FINALIZED')
-        if r['status'] != 'VOTING':
-            fail('ROUND_NOT_VOTING')
+        self._require_closed_reveal(r)
         is_detective = any(i['detective'] == sender for i in r['investigations'])
         if sender != r['forger_address'] and not is_detective:
             fail('RESOLVE_NOT_AUTHORIZED')

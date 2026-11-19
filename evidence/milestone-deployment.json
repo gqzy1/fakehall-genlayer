@@ -1,0 +1,18 @@
+{
+  "network": "Stable Studionet",
+  "chain_id": 61999,
+  "rpc": "https://studio.genlayer.com/api",
+  "contract_address": "0x0d99A88De2AD4151453297b02d17bCD3EaA09d50",
+  "deploy_tx": "0x516fa70c0af3027c83645dc73c37c58afbd8e932c5bb2646c6a9b844212e2475",
+  "explorer": "https://explorer-studio.genlayer.com/address/0x0d99A88De2AD4151453297b02d17bCD3EaA09d50",
+  "source_sha256": "abe44e492af66685604280c56398a98de43f4d181afa837f602100dd82af69e3",
+  "source_bytes": 28350,
+  "source_file": "contracts/fakehall.py",
+  "byte_parity": "BYTE_PARITY_MATCH: TRUE",
+  "wallets": {
+    "F": "0xbe8f47bd79d70068a9833bbf256b4f2debda0f5f",
+    "D1": "0x846810c3875ad3ff96378be4cc7a2fd19474b47f",
+    "D2": "0x2fdb8975c9c8b788e8aa8dc3f770a4870e6b207d"
+  },
+  "note": "Temp accounts generated for this evidence run only. No GEN moves in this contract (points only)."
+}

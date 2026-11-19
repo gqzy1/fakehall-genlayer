@@ -8,8 +8,9 @@
     "deploy": "node scripts/deploy_studionet.mjs",
     "evidence": "node scripts/run_evidence.mjs",
     "parity": "python3 scripts/verify_byte_parity.py",
-    "test": "python3 -m pytest tests/test_fakehall_mock.py -q",
+    "test": "python3 -m unittest discover -s tests",
     "verify": "node scripts/verify_evidence.mjs",
+    "verify:milestone": "node scripts/milestone_evidence.mjs --verify",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0"
   },

@@ -21,7 +21,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const state = {
   lang: 'zh',
   view: 'workbench',
-  roundId: 2, // live demo round: VOTING 2/3
+  roundId: 1,
   loupe: 'all',
   staticMode: new URLSearchParams(location.search).has('static'),
   evidenceView: 'human',
@@ -35,9 +35,11 @@ const state = {
   creating: false,     // true while doCreate is submitting (R2: button disabled + 提交中…)
   wallet: null,          // {mode:'injected'|'temporary', address, client, signer_mode}
   chainId: null,
+  writing: false,
   tx: null,              // {method, roundId, hash, phase, attempts, error}
   version: null,
 };
+const label = (zh, en) => state.lang === 'zh' ? zh : en;
 const t = (k) => (I18N_53[k] || EXTRA[k] || [k, k])[state.lang === 'zh' ? 0 : 1];
 const previewRound = (id) => SEEDS.find((r) => r.round_id === id);
 const liveRound = (id) => state.liveRounds?.find((r) => r.round_id === id) || null;
@@ -63,7 +65,7 @@ function previewAsRound(s) {
     })),
   };
 }
-const roundData = (id) => liveRound(id) || previewAsRound(previewRound(id));
+const roundData = (id) => liveRound(id) || previewAsRound(previewRound(id) || SEEDS[0]);
 const isLive = (id) => !!liveRound(id);
 const EVIDENCE_FORGER = (EVIDENCE.wallets.F || '').toLowerCase();
 
@@ -149,7 +151,7 @@ function renderChrome() {
     return `<button data-round="${t.round_id}" class="${state.roundId === t.round_id ? 'active' : ''}">#${String(t.round_id).padStart(2, '0')} <span class="st">${esc(t.status)}</span></button>`;
   }).join('');
   document.querySelectorAll('#roundTabs button').forEach((b) => {
-    b.onclick = () => { state.roundId = Number(b.dataset.round); state.tx = null; renderAll(); };
+    b.onclick = () => { state.roundId = Number(b.dataset.round); if (!state.writing) state.tx = null; renderAll(); };
   });
   // Banner: cold-start STATE-1 until a FINALIZED readback lands.
   const banner = $('#banner');
@@ -312,13 +314,27 @@ function workbenchHtml() {
   const w = state.wallet;
   const isForger = w && w.address === (r.forger_address || '').toLowerCase();
   const voted = w ? (r.investigations || []).some((i) => (i.detective || '').toLowerCase() === w.address) : false;
+  const sealedBallots = live && !!r.ballot_commitments;
+  const commitments = r.ballot_commitments || {};
+  const commitCount = Object.keys(commitments).length;
+  const committed = w && Object.hasOwn(commitments, w.address);
+  const deadlinePassed = Date.now() >= Date.parse(r.reveal_deadline);
+  const canLock = w && (isForger || commitCount === r.max_detectives);
+  const canJudge = w && (r.vote_count === commitCount || deadlinePassed);
   const canClose = r.status === 'VOTING' && (r.vote_count || 0) >= 1 && (isForger || (r.vote_count || 0) >= (r.max_detectives || 3));
   const loupe = state.loupe;
   const loupeBtns = [['all', 'compare.loupe_all'], ['date', 'compare.dim_date'], ['material', 'compare.dim_material'], ['provenance', 'compare.dim_provenance'], ['narrative', 'compare.dim_narrative']]
     .map(([k, lk]) => `<button data-loupe="${k}" class="${loupe === k ? 'active' : ''}">${esc(t(lk))}</button>`).join('');
 
   // Sealed board
-  const board = (r.investigations || []).length === 0
+  const board = sealedBallots && commitCount > 0
+    ? Object.entries(commitments).map(([address, digest]) => {
+        const ballot = r.investigations.find((row) => row.detective === address);
+        const phase = ballot ? (r.status === 'BALLOT_REVEAL' ? label('已揭示', 'Revealed') : `${ballot.suspected_fake} · ${ballot.points_awarded} PTS`)
+          : (r.status === 'JUDGED' || r.status === 'REVEALED' || deadlinePassed ? label('未揭示', 'Unrevealed') : label('已承诺', 'Committed'));
+        return `<div class="board-row"><span class="mono" title="${esc(address)}">${esc(shortAddr(address))}</span><span title="${esc(digest)}">${esc(phase)}</span></div>`;
+      }).join('')
+    : (r.investigations || []).length === 0
     ? `<p class="muted">${esc(t('ui.empty_round'))}</p>`
     : (r.investigations || []).map((inv, i) => {
         const sealed = inv.suspected_fake === 'SEALED_UNTIL_JUDGED';
@@ -327,33 +343,48 @@ function workbenchHtml() {
       }).join('');
 
   // R2 key-loss note (live demo path)
-  const r2note = (id === 2 && r.status === 'VOTING')
+  const r2note = (live && !sealedBallots && id === 2 && r.status === 'VOTING')
     ? `<div class="notice">${esc(t('ui.r2_note'))}</div>` : '';
 
   // Actions per state machine + permissions
   let actions = '';
-  if (r.status === 'OPEN' || r.status === 'VOTING') {
-    const voteDisabled = !w || isForger || voted || (r.vote_count >= (r.max_detectives || 3));
-    actions += `<h3>1 · ${esc(t('action.submit_judgment'))}</h3>
+  if (live && (r.status === 'OPEN' || r.status === 'VOTING')) {
+    const voteDisabled = !live || !w || isForger || (sealedBallots ? committed || commitCount >= r.max_detectives
+      : voted || r.vote_count >= r.max_detectives);
+    const voteLabel = sealedBallots ? label('提交投票承诺', 'Commit ballot') : t('action.submit_judgment');
+    actions += `<h3>1 · ${esc(voteLabel)}</h3>
       ${isForger ? `<div class="notice">${esc(t('ui.self_vote_block'))}</div>` : ''}
-      ${voted ? `<div class="notice">${esc(t('ui.already_voted'))}</div>` : ''}
+      ${(sealedBallots ? committed : voted) ? `<div class="notice">${esc(t('ui.already_voted'))}</div>` : ''}
       <label><input type="radio" name="voteChoice" value="FAKE_A" style="width:auto"> ${esc(t('action.vote_fake_a'))}</label>
       <label><input type="radio" name="voteChoice" value="FAKE_B" style="width:auto"> ${esc(t('action.vote_fake_b'))}</label>
       <label>${esc(t('ui.flaw_label'))}</label>
       <select id="voteFlaw"><option>DATE_MISMATCH</option><option>MATERIAL_MISMATCH</option><option>PROVENANCE_MISMATCH</option><option>FACT_FABRICATION</option></select>
       <label>${esc(t('ui.note_label'))}</label>
       <input id="voteNote" maxlength="280" placeholder="e.g. Source says Bouchard found it in Rosetta in 1799">
-      <p><button id="voteBtn" class="primary" ${voteDisabled ? 'disabled' : ''}>${esc(t('action.submit_judgment'))}</button>
+      <p><button id="voteBtn" class="primary" ${voteDisabled ? 'disabled' : ''}>${esc(voteLabel)}</button>
       ${!w ? `<span class="muted small"> — ${esc(t('ui.no_wallet'))}</span>` : ''}</p>`;
   }
-  if (r.status === 'VOTING') {
+  if (sealedBallots && r.status === 'VOTING') {
+    actions += `<p><button id="lockBallotsBtn" class="amber" ${canLock ? '' : 'disabled'}>${esc(label('锁定承诺并开放揭示', 'Lock commitments and open reveal'))}</button>
+      <span class="muted"> ${commitCount}/${r.max_detectives}</span></p>`;
+  }
+  if (sealedBallots && r.status === 'BALLOT_REVEAL') {
+    actions += `<h3>${esc(label('揭示选票', 'Reveal ballots'))}</h3>
+      <p>${esc(label('已揭示', 'Revealed'))} ${r.vote_count}/${commitCount} ·
+      <time datetime="${esc(r.reveal_deadline)}">${esc(new Date(r.reveal_deadline).toLocaleString())}</time></p>
+      ${committed && !voted && !deadlinePassed ? `<p><button id="revealBallotBtn" class="primary">${esc(label('揭示我的选票', 'Reveal my ballot'))}</button></p>` : ''}
+      <p><button id="closeBtn" class="amber" ${canJudge ? '' : 'disabled'}>${esc(t('action.close_and_judge'))}</button>
+      <button id="resolveBtn" ${canJudge && (voted || isForger) ? '' : 'disabled'}>${esc(t('ui.resolve_unreachable'))}</button></p>
+      <p class="muted small">${esc(label('全部揭示后即可裁决。到期未揭示的选票不计分。到期后请刷新。', 'Judging opens after all ballots are revealed or the deadline passes. Unrevealed ballots do not score. Refresh after the deadline.'))}</p>`;
+  }
+  if (live && !sealedBallots && r.status === 'VOTING') {
     actions += `<h3>2 · close_and_judge</h3>${r2note}
       <p><button id="closeBtn" class="amber" ${!canClose ? 'disabled' : ''}>${esc(t('action.close_and_judge'))}</button>
       <span class="small muted"> ${esc(r.vote_count || 0)}/${esc(r.max_detectives || 3)} ${esc(t('ui.votes'))}${isForger ? ' · forger' : ''}${(r.vote_count || 0) >= (r.max_detectives || 3) ? ' · full house — anyone may close' : ''}</span></p>
       <p><button id="resolveBtn" ${!w ? 'disabled' : ''}>${esc(t('ui.resolve_unreachable'))}</button>
       <span class="small muted"> — ${esc(t('ui.fail_closed').split('。')[0])}</span></p>`;
   }
-  if (r.status === 'JUDGED') {
+  if (live && r.status === 'JUDGED') {
     actions += `<h3>2 · ${esc(t('action.reveal_forgery'))} / ${esc(t('action.archive_judged_round'))}</h3>`;
     if (isForger) {
       actions += `<label>secret_fake_choice</label><select id="revealChoice"><option>FAKE_A</option><option>FAKE_B</option></select>
@@ -367,10 +398,10 @@ function workbenchHtml() {
     }
     actions += `<p><button id="archiveBtn" ${!w ? 'disabled' : ''}>${esc(t('action.archive_judged_round'))}</button></p>`;
   }
-  if (r.status === 'OPEN' && isForger) {
+  if (live && r.status === 'OPEN' && isForger) {
     actions += `<p><button id="cancelBtn" class="danger">${esc(t('action.cancel_open_round'))}</button></p>`;
   }
-  if (r.status === 'REVEALED' && r.reveal_mode && ['VOID_ARCHIVED', 'CONSENSUS_ARCHIVED'].includes(r.reveal_mode) && isForger) {
+  if (live && r.status === 'REVEALED' && r.reveal_mode && ['VOID_ARCHIVED', 'CONSENSUS_ARCHIVED'].includes(r.reveal_mode) && isForger) {
     actions += `<h3>${esc(t('ui.supplement'))}</h3><p class="small muted">${esc(t('ui.supplement_note'))}</p>
       <label>secret_fake_choice</label><select id="suppChoice"><option>FAKE_A</option><option>FAKE_B</option></select>
       <label>salt</label><input id="suppSalt" placeholder="salt used at creation">
@@ -378,6 +409,12 @@ function workbenchHtml() {
   }
   if (r.status === 'REVEALED' && r.supplement_verified) {
     actions += `<p class="small">supplement_verified: true · supplement_choice ${esc(r.supplement_choice || '')}</p>`;
+  }
+
+  if (sealedBallots && w && !voted && !isForger && (committed || r.status === 'OPEN' || r.status === 'VOTING')) {
+    actions += `<p><button id="backupBallotBtn">${esc(label('下载选票备份', 'Download ballot backup'))}</button>
+      <label>${esc(label('从文件恢复选票', 'Restore ballot from file'))}<input id="importBallot" type="file" accept=".json,application/json"></label></p>
+      <p class="muted small">${esc(label('请在揭示前保密备份文件，并用原投票钱包揭示。', 'Keep the backup private until reveal and reveal using the original signer.'))}</p>`;
   }
 
   // Export gate: enabled ONLY on a readback snapshot that carries the flag
@@ -388,7 +425,7 @@ function workbenchHtml() {
 
   return `
   <div class="panel"><div style="display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:baseline">
-    <h2 style="margin:0">CASE #${String(id).padStart(2, '0')} · ${esc(r.theme || seed.theme)}</h2>
+    <h2 style="margin:0">CASE #${String(id).padStart(2, '0')} · ${esc(r.theme || seed?.theme)}</h2>
     <span class="stamp ${r.status === 'REVEALED' || r.status === 'JUDGED' ? 'real' : 'sealed'}">${esc(live ? t('status.' + r.status) : t('status.PREVIEW_SEED'))}</span>
     ${live ? '' : `<span class="sealed-tag">${esc(t('status.PREVIEW_SEED'))}</span>`}
   </div>
@@ -420,7 +457,7 @@ function workbenchHtml() {
         <hr style="border-color:var(--border-hairline)">
         <p><button id="exportBtn" ${exportOk ? '' : 'disabled'}>${esc(t('action.export_dossier'))}</button>
         ${exportOk ? '' : `<span class="small muted"> ${esc(t('ui.export_blocked'))}</span>`}</p>
-        <p class="small muted">${esc(t('ui.full_loop_hint'))}</p>
+        <p class="small muted">${esc(sealedBallots ? label('承诺 → 锁定 → 揭示 → 裁决', 'Commit → Lock → Reveal → Judge') : t('ui.full_loop_hint'))}</p>
       </div>
     </div>
   </div>`;
@@ -471,7 +508,7 @@ function galleryHtml() {
     <p class="small">${esc(g.fake_item?.title || '')} — ${esc(g.fake_item?.claimed_provenance || '')}</p>
     <p><button data-goto-round="${g.round_id}">回看本局完整勘验台</button></p></div>`).join('');
   return `<div class="panel"><h2>${esc(t('nav.gallery'))}</h2>
-    <p class="small muted">Rounds ${esc((EVIDENCE.gallery_round_ids || []).join(', '))} · ${esc(t('status.REVEALED'))} + verdict ≠ VOID · ${live ? esc(t('ui.readback_ok')) : esc(t('status.PREVIEW_SEED'))}</p></div>${cards}`;
+    <p class="small muted">Rounds ${esc(items.map((row) => row.round_id).join(', '))} · ${esc(t('status.REVEALED'))} + verdict ≠ VOID · ${live ? esc(t('ui.readback_ok')) : esc(t('status.PREVIEW_SEED'))}</p></div>${cards}`;
 }
 
 function leaderboardsHtml() {
@@ -500,10 +537,12 @@ const ADV = [
 ];
 
 function evidenceHtml() {
-  const d = state.deployment || EVIDENCE;
+  const milestone = state.deployment?.ballot_protocol === 2;
   const rounds = EVIDENCE.rounds;
   const human = `
-  <div class="panel"><h2>Reviewer Evidence — FakeHall</h2>
+  ${milestone ? `<div class="panel"><h2>${esc(label('侦探盲投 Milestone', 'Sealed Ballots Milestone'))}</h2>
+    <p><a href="https://github.com/gqzy1/fakehall-genlayer/blob/milestone/sealed-detective-votes/MILESTONE.md">${esc(label('查看新合约验收记录', 'Review the new contract evidence'))}</a></p></div>` : ''}
+  <div class="panel"><h2>${milestone ? 'Original deployment evidence' : 'Reviewer Evidence — FakeHall'}</h2>
     <p><button id="evHuman" class="${state.evidenceView === 'human' ? 'active' : ''}">${esc(t('nav.view_human'))}</button>
     <button id="evMachine" class="${state.evidenceView === 'machine' ? 'active' : ''}">${esc(t('nav.view_machine'))}</button></p>
     <dl class="kv">
@@ -571,6 +610,7 @@ function renderAll() {
   else v.innerHTML = evidenceHtml();
   bindViewActions();
   bindDrawerActions();
+  if (state.writing) v.querySelectorAll('button, input, select').forEach((el) => { el.disabled = true; });
 }
 
 function bindViewActions() {
@@ -580,6 +620,10 @@ function bindViewActions() {
   });
   const on = (id, fn) => { const el = $(id); if (el) el.onclick = fn; };
   on('#voteBtn', doVote);
+  on('#lockBallotsBtn', () => doSimple('open_ballot_reveal', [state.roundId]));
+  on('#revealBallotBtn', revealBallot);
+  on('#backupBallotBtn', backupBallot);
+  if ($('#importBallot')) $('#importBallot').onchange = importBallot;
   on('#closeBtn', () => doClose(state.roundId));
   on('#resolveBtn', () => doResolve(state.roundId));
   on('#revealBtn', doReveal);
@@ -643,6 +687,8 @@ function rememberSalt(roundId, choice, salt) {
 async function runWrite(method, args, roundId, { after } = {}) {
   const w = state.wallet;
   if (!w) { alert(t('ui.no_wallet')); return; }
+  if (state.writing) return;
+  state.writing = true;
   state.tx = { method, roundId, hash: null, phase: 0, attempts: (state.tx?.method === method && state.tx?.roundId === roundId ? state.tx.attempts + 1 : 1), error: null,
     // R2: pre-broadcast failures are retryable by re-sending the same call.
     // The retry closure is stored on the tx record (never re-created by the
@@ -660,7 +706,7 @@ async function runWrite(method, args, roundId, { after } = {}) {
     state.tx.phase = 3; renderAll();
     const exec = leaderExecution(receipt);
     const payload = leaderPayload(receipt);
-    if (exec === 'ERROR') {
+    if (exec !== 'SUCCESS' || ![6, 'MAJORITY_AGREE'].includes(receipt.result)) {
       if (payload.includes('SOURCE_OR_IMAGE_UNREACHABLE_FAIL_CLOSED')) { state.tx.error = 'FAIL_CLOSED'; }
       else state.tx.error = 'Leader ERROR: ' + payload.slice(0, 200);
       renderAll();
@@ -670,7 +716,9 @@ async function runWrite(method, args, roundId, { after } = {}) {
     if (after) after();
     await refreshLive();
   } catch (e) {
-    state.tx.error = String(e?.shortMessage || e?.message || e).slice(0, 300);
+    if (state.tx) state.tx.error = String(e?.shortMessage || e?.message || e).slice(0, 300);
+  } finally {
+    state.writing = false;
     renderAll();
   }
 }
@@ -687,10 +735,97 @@ async function doVote() {
   const choice = document.querySelector('input[name="voteChoice"]:checked')?.value;
   if (!choice) { writeError('submit_investigation', state.roundId, 'Pick FAKE_A or FAKE_B first. / 请先选择 FAKE_A 或 FAKE_B。'); return; }
   const flaw = $('#voteFlaw')?.value || 'DATE_MISMATCH';
-  const note = $('#voteNote')?.value || '';
+  const note = ($('#voteNote')?.value || '').trim();
   if (note.length < 1) { writeError('submit_investigation', state.roundId, 'A one-line investigation note is required (1–280 chars). / 需要填写一行调查笔记（1–280 字）。'); return; }
+  if (liveRound(state.roundId)?.ballot_commitments) {
+    await commitBallot(choice, flaw, note);
+    return;
+  }
   await runWrite('submit_investigation', [state.roundId, choice, flaw, note], state.roundId);
 }
+function ballotKey(roundId, address) {
+  return ['fakehall-ballot-v2', CHAIN_ID, contractAddress().toLowerCase(), roundId, address].join(':');
+}
+
+function ballotDigest(roundId, address, { choice, flaw, note, salt }) {
+  return sha256Hex(['fakehall-v2', contractAddress().toLowerCase(), roundId, address, choice, flaw, salt, note].join(':'));
+}
+
+async function commitBallot(choice, flaw, note) {
+  const roundId = state.roundId;
+  const address = state.wallet.address;
+  const key = ballotKey(roundId, address);
+  try {
+    const existing = localStorage.getItem(key);
+    const ballot = existing ? JSON.parse(existing) : {
+      choice, flaw, note,
+      salt: Array.from(crypto.getRandomValues(new Uint8Array(32)), (byte) => byte.toString(16).padStart(2, '0')).join(''),
+    };
+    if (ballot.choice !== choice || ballot.flaw !== flaw || ballot.note !== note) {
+      throw new Error(label('此轮已有本地选票。请用下载的备份恢复原选项和笔记。', 'A local ballot already exists. Use the downloaded backup to recover the original choice and note.'));
+    }
+    localStorage.setItem(key, JSON.stringify(ballot));
+    const digest = await ballotDigest(roundId, address, ballot);
+    await runWrite('commit_investigation', [roundId, digest], roundId);
+  } catch (e) {
+    writeError('commit_investigation', roundId, e.message);
+  }
+}
+
+async function revealBallot() {
+  const roundId = state.roundId;
+  const address = state.wallet.address;
+  try {
+    const ballot = JSON.parse(localStorage.getItem(ballotKey(roundId, address)));
+    const expected = liveRound(roundId)?.ballot_commitments?.[address];
+    if (!ballot || !expected || await ballotDigest(roundId, address, ballot) !== expected) {
+      throw new Error(label('请导入与链上承诺匹配的选票备份。', 'Restore a ballot backup that matches the on-chain commitment.'));
+    }
+    await runWrite('reveal_investigation', [roundId, ballot.choice, ballot.flaw, ballot.note, ballot.salt], roundId);
+  } catch (e) {
+    writeError('reveal_investigation', roundId, e.message);
+  }
+}
+
+function backupBallot() {
+  const roundId = state.roundId;
+  const address = state.wallet.address;
+  try {
+    const key = ballotKey(roundId, address);
+    const ballot = JSON.parse(localStorage.getItem(key));
+    if (!ballot) throw new Error(label('本浏览器没有保存选票。', 'No ballot stored in this browser.'));
+    const url = URL.createObjectURL(new Blob([JSON.stringify({ key, ballot })], { type: 'application/json' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `fakehall-ballot-${roundId}.json`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (e) {
+    writeError('ballot_backup', roundId, e.message);
+  }
+}
+
+async function importBallot(event) {
+  const roundId = state.roundId;
+  const address = state.wallet.address;
+  try {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.size > 4096) throw new Error(label('选票备份文件过大。', 'Ballot backup is too large.'));
+    const key = ballotKey(roundId, address);
+    const record = JSON.parse(await file.text());
+    const ballot = record.ballot;
+    const expected = liveRound(roundId)?.ballot_commitments?.[address];
+    if (record.key !== key || !expected || !ballot || await ballotDigest(roundId, address, ballot) !== expected) {
+      throw new Error(label('备份与本轮钱包的承诺不匹配。', 'Backup does not match this wallet’s commitment in this round.'));
+    }
+    localStorage.setItem(key, JSON.stringify(ballot));
+    renderAll();
+  } catch (e) {
+    writeError('ballot_backup', roundId, e.message);
+  }
+}
+
 async function doClose(roundId, isRetry = false) {
   await runWrite('close_and_judge', [roundId], roundId);
 }
@@ -739,7 +874,7 @@ function doExport() {
     alert(t('ui.export_blocked'));
     return;
   }
-  const ev = EVIDENCE.rounds[state.roundId];
+  const ev = snap.ballot_commitments ? null : EVIDENCE.rounds[state.roundId];
   const dossier = {
     project: 'FakeHall',
     network: 'Stable Studionet',
@@ -775,7 +910,7 @@ function doExport() {
 function studioHtml() {
   return `<div class="drawer" id="studioDrawer" hidden role="dialog" aria-label="Forger Studio">
     <div style="display:flex;justify-content:space-between;align-items:baseline"><h2>${esc(t('nav.forger_studio'))}</h2><button id="studioClose">✕</button></div>
-    <p class="small muted">${esc(t('ui.full_loop_hint'))}</p>
+    <p class="small muted">${esc(sealedBallots ? label('承诺 → 锁定 → 揭示 → 裁决', 'Commit → Lock → Reveal → Judge') : t('ui.full_loop_hint'))}</p>
     <label>${esc(t('ui.theme'))}</label><input id="fTheme" maxlength="120" placeholder="The Rosetta Stone">
     <div class="two-col">
       <div><label>${esc(t('anchor.primary_source'))} *</label><input id="fSrc" placeholder="https://en.wikipedia.org/wiki/...">
@@ -809,7 +944,7 @@ function itemFields(side) {
 }
 function nextRoundId() {
   const ids = (state.liveRounds || SEEDS).map((r) => r.round_id);
-  return Math.max(...ids) + 1;
+  return Math.max(0, ...ids) + 1;
 }
 function bindDrawerActions() {
   const drawer = $('#studioDrawer');
@@ -820,7 +955,7 @@ function bindDrawerActions() {
   // runs on every renderAll, so the state survives re-renders.
   const cb = $('#fCreate');
   if (cb) {
-    cb.disabled = !!state.creating;
+    cb.disabled = state.creating || state.writing;
     cb.textContent = state.creating ? t('ui.submitting') : 'create_round — 提交创建新回合上链 / Submit create_round';
   }
   $('#fGenSalt').onclick = () => {

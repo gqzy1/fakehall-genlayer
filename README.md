@@ -1,5 +1,11 @@
 # FakeHall 真假馆
 
+[Sealed ballot Milestone](MILESTONE.md) · [Milestone deployment](https://explorer-studio.genlayer.com/address/0x0d99A88De2AD4151453297b02d17bCD3EaA09d50)
+
+The Milestone adds contract-enforced commitment, reveal, expiry and settlement for detective ballots. Run `npm test` and `npm run verify:milestone` to check the new implementation and on-chain evidence.
+
+## Original deployment and evidence
+
 A multiplayer forgery-detection game on GenLayer Stable Studionet
 (Chain ID 61999). A forger submits two exhibit records about one real
 artefact — one matches a public authoritative source, the other is a

@@ -24,7 +24,7 @@ const opt = (name, def) => {
 const SEEDS_PATH = opt('--seeds', path.resolve(REPO, '..', '..', '..', 'build-fakehall', 'seeds.json'));
 const CHECKPOINT = opt('--checkpoint', path.resolve(REPO, '..', '..', '..', 'build-fakehall', '.fakehall-checkpoint.json'));
 const CONTRACT_PATH = path.join(REPO, 'contracts', 'fakehall.py');
-const DEPLOYMENT_PATH = path.join(REPO, 'evidence', 'deployment.json');
+const DEPLOYMENT_PATH = opt('--output', path.join(REPO, 'evidence', 'deployment.json'));
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const sha = (s) => createHash('sha256').update(s).digest('hex');
@@ -103,13 +103,17 @@ console.log('chain OK:', chainId, RPC_URL);
 
 let address = cp.contract_address || null;
 let deployTx = cp.deploy_tx || null;
-if (address && deployTx) {
+if (deployTx) {
   console.log('resuming existing deploy', address, deployTx);
   const tx = await collect(deployer, deployTx, 'deploy (resume)');
   if (!good(tx)) throw new Error('recorded deploy tx is not good; inspect before redeploying');
+  address = tx.data?.contract_address || tx.contract_address;
+  if (!address) throw new Error('no contract address in deploy receipt');
 } else {
   await sleep(3000);
   const hash = await deployer.deployContract({code: source, args: [], value: 0n, leaderOnly: false});
+  cp.deploy_tx = hash;
+  saveCheckpoint(cp);
   const tx = await collect(deployer, hash, 'deploy');
   if (!good(tx)) throw new Error('deploy failed: ' + JSON.stringify(tx));
   address = tx.data?.contract_address || tx.contract_address;
