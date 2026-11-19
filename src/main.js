@@ -22,7 +22,7 @@ import showcaseEvidence from '../evidence/archive-showcase.json';
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const state = {
-  lang: 'zh',
+  lang: 'en',
   view: caseRoute() ? 'workbench' : 'lobby',
   roundId: caseRoute() ?? 1,
   filter: 'all',
@@ -1279,7 +1279,7 @@ async function doCreate() {
 // ---------- static wiring ----------
 document.addEventListener('DOMContentLoaded', () => {
   document.body.insertAdjacentHTML('beforeend', studioHtml());
-  try { if (localStorage.getItem('fakehall-language') === 'en') state.lang = 'en'; } catch { /* unavailable */ }
+  try { if (localStorage.getItem('fakehall-language') === 'zh') state.lang = 'zh'; } catch { /* unavailable */ }
   $('#langBtn').onclick = () => {
     state.lang = state.lang === 'zh' ? 'en' : 'zh';
     try { localStorage.setItem('fakehall-language', state.lang); } catch { /* unavailable */ }

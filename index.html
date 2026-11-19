@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FakeHall 真假馆 — Investigation Archive</title>
+<title>FakeHall — Investigation Archive</title>
 <meta name="description" content="Multi-validator public-source forensics & forgery game on GenLayer Stable Studionet (61999). Two exhibits, one forgery, consensus decides.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,31 +12,31 @@
 </head>
 <body>
 <header class="topbar">
-  <a class="brand" id="brandHome" href="./"><span class="brand-mark" aria-hidden="true">F</span><span>FakeHall<small id="appSub">真假馆</small></span></a>
+  <a class="brand" id="brandHome" href="./"><span class="brand-mark" aria-hidden="true">F</span><span>FakeHall<small id="appSub">Investigation archive</small></span></a>
   <div class="spacer"></div>
   <nav>
-    <button data-nav="lobby">案件大厅</button>
-    <button data-nav="gallery">已揭晓赝品画廊</button>
-    <button data-nav="leaderboards">双排行榜</button>
-    <button data-nav="evidence">评审员证据核验页</button>
+    <button data-nav="lobby">Cases</button>
+    <button data-nav="gallery">Gallery</button>
+    <button data-nav="leaderboards">Rankings</button>
+    <button data-nav="evidence">Evidence</button>
   </nav>
-  <button id="studioBtn">+ 创建造假回合</button>
-  <button id="langBtn">EN</button>
-  <button id="motionBtn">动效: 开启</button>
+  <button id="studioBtn">+ Forger Studio</button>
+  <button id="langBtn">中文</button>
+  <button id="motionBtn">Motion: ON</button>
 
 </header>
 <div class="wrap">
   <!-- Cold-start: this banner and every verdict/score below show only
        unconfirmed text until a latest-final get_* readback returns.
        No success badge and no payout number exists in this static HTML. -->
-  <div class="banner" id="banner"><span class="grow">预览种子 · 未在链上确认 / PREVIEW SEED · Unconfirmed On-Chain</span></div>
-  <div class="walletbar" id="walletBar"><span>未连接钱包 — 只读模式</span></div>
+  <div class="banner" id="banner"><span class="grow">Preview · Unconfirmed on-chain</span></div>
+  <div class="walletbar" id="walletBar"><span>No wallet connected — read-only mode</span></div>
 
   <main id="view" tabindex="-1">
     <div class="panel">
-      <h2 id="appTitle">FakeHall 真假馆</h2>
-      <p class="muted">正在读取链上状态… / Reading on-chain state…</p>
-      <p>未确认 / UNCONFIRMED — <span>等待链上 FINALIZED 读回</span></p>
+      <h2 id="appTitle">FakeHall</h2>
+      <p class="muted">Reading on-chain state…</p>
+      <p>Unconfirmed — <span>Waiting for finalized readback</span></p>
     </div>
   </main>
 </div>
