@@ -1082,7 +1082,7 @@ function studioHtml() {
       <div><h3>${esc(t('ui.exhibit_b'))}</h3>${itemFields('b')}</div>
     </div>
     <h3>Commit-Reveal — ${esc(t('anchor.commitment_hash'))}</h3>
-    <label><input type="radio" name="fakeChoice" value="FAKE_A" ${draft?.choice === 'FAKE_A' ? 'checked' : ''}> FAKE_A</label>
+    <label><input type="radio" name="fakeChoice" value="FAKE_A"> FAKE_A</label>
     <label><input type="radio" name="fakeChoice" value="FAKE_B" checked style="width:auto"> FAKE_B</label>
     <label>Salt *</label><input id="fSalt" placeholder="e.g. rosetta_bouchard_1799_salt">
     <p><button id="fGenSalt">${esc(t('ui.salt_random'))}</button> <button id="fDlSalt">${esc(t('ui.salt_download'))}</button></p>
