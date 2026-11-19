@@ -359,8 +359,10 @@ function lobbyHtml() {
       </div>
     </div>
     <figure class="hero-object">
-      ${media(featured?.item_a?.image_url ?? SEEDS[0].item_a.image_url, featured?.item_a?.title ?? SEEDS[0].item_a.title)}
-      <figcaption>${esc(featured?.item_a?.title ?? SEEDS[0].item_a.title)}</figcaption>
+      <div class="hero-frame">
+        ${media(featured?.item_a?.image_url ?? SEEDS[0].item_a.image_url, featured?.item_a?.title ?? SEEDS[0].item_a.title)}
+        <figcaption>${esc(featured?.item_a?.title ?? SEEDS[0].item_a.title)}</figcaption>
+      </div>
     </figure>
   </section>
   <section class="case-index" aria-labelledby="caseIndexTitle">
