@@ -1,4 +1,6 @@
-# FakeHall — known limitations
+# FakeHall V1 — known limitations
+
+For the sealed-ballot deployment and its protocol boundaries, see [the Milestone notes](MILESTONE.md).
 
 1. **The source is the anchor, not the truth.** FakeHall proves which
    exhibit contradicts the stated public source (e.g. a Wikipedia page)

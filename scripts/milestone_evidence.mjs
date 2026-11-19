@@ -81,19 +81,26 @@ if (verifyOnly) {
     const step = evidence.transactions[key];
     assert.ok(step?.receipt, 'Missing evidence for ' + key);
     assert.deepEqual(await receipt(step.hash, expectedErrors[key]), step.receipt, key);
-    await wait(2500);
+    await wait(1100);
   }
   const sealed = evidence.readbacks.sealed;
   for (const [key, role] of [['commit_one', 'D1'], ['commit_two', 'D2']]) {
     const step = evidence.transactions[key];
     const tx = await reader.getTransaction({ hash: step.hash });
-    const call = abi.calldata.decode(Buffer.from(tx.data.calldata, 'base64'));
+    const call = abi.calldata.decode(Buffer.from(tx.data.calldata.base64, 'base64'));
     const sender = deployment.wallets[role];
     assert.equal(tx.from_address.toLowerCase(), sender);
     assert.equal(tx.to_address.toLowerCase(), address.toLowerCase());
     assert.equal(call.get('method'), 'commit_investigation');
+    assert.equal(call.size, 2);
     assert.deepEqual(call.get('args'), [1n, sealed.ballot_commitments[sender]]);
     assert.match(call.get('args')[1], /^[a-f0-9]{64}$/);
+  }
+  for (const key of ['early_judgment', 'settle']) {
+    const tx = await reader.getTransaction({ hash: evidence.transactions[key].hash });
+    assert.ok(Number.isFinite(Date.parse(tx.created_at)), 'Missing on-chain transaction timestamp');
+    const before = Date.parse(tx.created_at) < Date.parse(evidence.revealDeadline);
+    assert.equal(before, key === 'early_judgment', key);
   }
   const final = await getRound();
   assert.deepEqual(final, evidence.readbacks.final);
@@ -153,10 +160,12 @@ await step('duplicate_commit', 'D1', 'commit_investigation', [1, '1'.repeat(64)]
 await step('early_reveal', 'D2', 'reveal_investigation', []);
 await step('duplicate_commit', 'D1', 'commit_investigation', []);
 await step('lock', 'F', 'open_ballot_reveal', [1]);
-const opened = await getRound();
-assert.equal(opened.status, 'BALLOT_REVEAL');
-evidence.revealDeadline = opened.reveal_deadline;
-save();
+if (!evidence.revealDeadline) {
+  const opened = await getRound();
+  assert.equal(opened.status, 'BALLOT_REVEAL');
+  evidence.revealDeadline = opened.reveal_deadline;
+  save();
+}
 await step('late_commit', 'F', 'commit_investigation', [1, '2'.repeat(64)], true);
 await step('modified_ballot', 'D1', 'reveal_investigation', [1, 'FAKE_A', ...ballot.D1.slice(1)], true);
 await step('reveal_one', 'D1', 'reveal_investigation', [1, ...ballot.D1], true);

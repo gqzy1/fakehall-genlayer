@@ -6,6 +6,8 @@ The Milestone adds contract-enforced commitment, reveal, expiry and settlement f
 
 ## Original deployment and evidence
 
+The following describes V1. To run its verification scripts with the matching source, use the [pinned V1 revision](https://github.com/gqzy1/fakehall-genlayer/tree/69ff64bd1ef610173cbeafa09cb840706b609a78).
+
 A multiplayer forgery-detection game on GenLayer Stable Studionet
 (Chain ID 61999). A forger submits two exhibit records about one real
 artefact — one matches a public authoritative source, the other is a

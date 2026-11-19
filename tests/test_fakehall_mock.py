@@ -399,6 +399,20 @@ class Tests(unittest.TestCase):
         self.assertEqual([i['detective'] for i in result['investigations']], [D1])
         self.assertEqual(result['investigations'][0]['points_awarded'], 100)
 
+    def test_copied_commitment_cannot_be_revealed_by_another_wallet(self):
+        rid = self.create(max_det=2)['round_id']
+        self.vote(rid, D1)
+        ballot = self.ballots[rid][D1]
+        digest = m._ballot_hash(rid, D1, *ballot)
+        G.message.sender_address = D2
+        self.c.commit_investigation(rid, digest)
+        self.c.open_ballot_reveal(rid)
+        with self.assertRaisesRegex(E, 'BALLOT_COMMITMENT_MISMATCH'):
+            self.c.reveal_investigation(rid, *ballot)
+        G.message.sender_address = D1
+        revealed = json.loads(self.c.reveal_investigation(rid, *ballot))
+        self.assertEqual(revealed['vote_count'], 1)
+
     def test_no_reveals_void_without_fetch(self):
         rid = self.create(max_det=1)['round_id']
         self.vote(rid, D1)
