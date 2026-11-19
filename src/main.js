@@ -910,7 +910,7 @@ function doExport() {
 function studioHtml() {
   return `<div class="drawer" id="studioDrawer" hidden role="dialog" aria-label="Forger Studio">
     <div style="display:flex;justify-content:space-between;align-items:baseline"><h2>${esc(t('nav.forger_studio'))}</h2><button id="studioClose">✕</button></div>
-    <p class="small muted">${esc(sealedBallots ? label('承诺 → 锁定 → 揭示 → 裁决', 'Commit → Lock → Reveal → Judge') : t('ui.full_loop_hint'))}</p>
+    <p class="small muted">${esc(state.deployment?.ballot_protocol === 2 ? label('承诺 → 锁定 → 揭示 → 裁决', 'Commit → Lock → Reveal → Judge') : t('ui.full_loop_hint'))}</p>
     <label>${esc(t('ui.theme'))}</label><input id="fTheme" maxlength="120" placeholder="The Rosetta Stone">
     <div class="two-col">
       <div><label>${esc(t('anchor.primary_source'))} *</label><input id="fSrc" placeholder="https://en.wikipedia.org/wiki/...">
