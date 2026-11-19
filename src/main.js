@@ -6,7 +6,7 @@
 // is_finalized_readback flag (see src/chain.js); this file never sets it.
 import {
   CHAIN_ID, EXPLORER_BASE, loadDeployment, contractAddress, explorerTx, explorerAddress,
-  readRound, readAllRounds, readLeaderboards, readGallery,
+  reader, readRound, readAllRounds, readLeaderboards, readGallery,
   waitFinalized, leaderPayload, leaderExecution,
   injectedProvider, connectInjected, injectedChainId,
   temporaryAccount, rotateTemporaryAccount, destroyTemporaryAccount,
@@ -15,13 +15,18 @@ import {
 import { I18N_53, EXTRA } from './i18n.js';
 import { SEEDS } from './seeds.js';
 import { EVIDENCE } from './evidence.js';
+import { caseRoute, caseUrl, caseStage, httpsUrl, timeRemaining } from './archive.js';
+import milestoneEvidence from '../evidence/milestone-ballots.json';
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const state = {
   lang: 'zh',
-  view: 'workbench',
-  roundId: 1,
+  view: caseRoute() ? 'workbench' : 'lobby',
+  roundId: caseRoute() ?? 1,
+  filter: 'all',
+  mobileSide: 'A',
+  voteDrafts: new Map(),
   loupe: 'all',
   staticMode: new URLSearchParams(location.search).has('static'),
   evidenceView: 'human',
@@ -117,8 +122,12 @@ function renderChrome() {
   $('#langBtn').textContent = state.lang === 'zh' ? 'EN' : '中文';
   $('#motionBtn').textContent = t(state.staticMode ? 'nav.motion_toggle_off' : 'nav.motion_toggle_on');
   document.querySelectorAll('[data-nav]').forEach((b) => {
-    b.classList.toggle('active', b.dataset.nav === state.view);
-    b.textContent = t('nav.' + b.dataset.nav);
+    const active = b.dataset.nav === state.view || (b.dataset.nav === 'lobby' && state.view === 'workbench');
+    b.classList.toggle('active', active);
+    if (active) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+    b.textContent = ({ lobby: label('案件大厅', 'Cases'), gallery: label('馆藏', 'Gallery'),
+      leaderboards: label('排行榜', 'Rankings'), evidence: label('链上证据', 'Evidence') })[b.dataset.nav];
   });
   $('#studioBtn').textContent = t('nav.forger_studio');
   // #appTitle lives inside #view in index.html, and renderAll() replaces
@@ -129,30 +138,8 @@ function renderChrome() {
   // static first-paint label; the CASE heading takes over after render.
   const appTitleEl = $('#appTitle');
   if (appTitleEl) appTitleEl.textContent = t('app.title');
-  $('#appSub').textContent = t('app.subtitle');
-  // Round tabs
-  // R2: tabs list every round known on-chain, not just the 9 seeds — a round
-  // created in the browser (e.g. harness round 10, or any user-created round)
-  // must stay reachable after a reload. Live rounds come from the FINALIZED
-  // readback; seeds without live data keep their expected status + '*'.
-  // Before any readback, tabs are seeds only (no live data to union yet).
-  const tabSeeds = state.liveRounds
-    ? [...state.liveRounds.map((r) => ({ round_id: r.round_id, status: r.status, live: true }))]
-    : [];
-  const tabList = state.liveRounds
-    ? [...tabSeeds, ...SEEDS.filter((s) => !tabSeeds.some((x) => x.round_id === s.round_id))
-        .map((s) => ({ round_id: s.round_id, status: s.expected_final_status + '*', live: false }))]
-        .sort((a, b) => a.round_id - b.round_id)
-    : SEEDS.map((s) => ({ round_id: s.round_id, status: s.expected_final_status + '*', live: false }));
-  // Guard: never render a round id with neither live data nor a seed (the
-  // workbench would throw on undefined item fields). Clamp to the demo round.
-  if (!liveRound(state.roundId) && !previewRound(state.roundId)) state.roundId = 2;
-  $('#roundTabs').innerHTML = tabList.map((t) => {
-    return `<button data-round="${t.round_id}" class="${state.roundId === t.round_id ? 'active' : ''}">#${String(t.round_id).padStart(2, '0')} <span class="st">${esc(t.status)}</span></button>`;
-  }).join('');
-  document.querySelectorAll('#roundTabs button').forEach((b) => {
-    b.onclick = () => { state.roundId = Number(b.dataset.round); if (!state.writing) state.tx = null; renderAll(); };
-  });
+  document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
+  $('#appSub').textContent = label('真假馆', 'Investigation archive');
   // Banner: cold-start STATE-1 until a FINALIZED readback lands.
   const banner = $('#banner');
   if (!state.deployment) {
@@ -175,7 +162,7 @@ function renderChrome() {
     banner.innerHTML = `<span class="grow">${readingTxt}${errTxt}</span><button id="refreshBtn" ${state.reading ? 'disabled' : ''}>${esc(t('ui.refresh'))}</button>`;
   } else {
     banner.className = 'banner ok';
-    banner.innerHTML = `<span class="grow">✓ ${esc(t('ui.readback_ok'))} — get_all_rounds / get_leaderboards / get_revealed_gallery (latest-final)</span><button id="refreshBtn">${esc(t('ui.refresh'))}</button>`;
+    banner.innerHTML = `<span class="grow">✓ ${esc(label('Studionet · 已同步最终状态', 'Studionet · Finalized state synced'))}</span><button id="refreshBtn">${esc(t('ui.refresh'))}</button>`;
   }
   const rb = $('#refreshBtn');
   if (rb) rb.onclick = () => refreshLive();
@@ -283,6 +270,99 @@ function stampFor(side, r, live) {
 }
 const pts = (v, live) => (live ? String(v) + ' PTS' : t('ui.unconfirmed_points'));
 
+// ---------- archive navigation ----------
+const filterNames = () => ({
+  all: label('全部案件', 'All cases'), join: label('可加入', 'Open'),
+  reveal: label('等待揭示', 'Revealing'), closed: label('已裁决', 'Judged'),
+  inactive: label('已撤回', 'Withdrawn'),
+});
+
+function navigate(view, id = null) {
+  if (id) {
+    state.roundId = id;
+    state.loupe = 'all';
+    state.mobileSide = 'A';
+  }
+  state.view = view;
+  const url = caseUrl(view === 'workbench' ? state.roundId : null);
+  if (url.href !== location.href) history.pushState(null, '', url);
+  renderAll();
+  window.scrollTo(0, 0);
+  $('#view').focus({preventScroll: true});
+}
+
+function media(url, alt = '') {
+  const source = httpsUrl(url);
+  return source ? `<div class="archive-media"><img src="${esc(source)}" alt="${esc(alt)}" loading="lazy" referrerpolicy="no-referrer"></div>`
+    : '<div class="archive-media"></div>';
+}
+
+function lobbyHtml() {
+  const cases = [...(state.liveRounds ?? [])].sort((a, b) => b.round_id - a.round_id);
+  const featured = cases.find((r) => r.round_id === 1) ?? cases[0];
+  const names = filterNames();
+  const cards = cases.filter((r) => state.filter === 'all' || caseStage(r.status) === state.filter);
+  return `<section class="archive-hero">
+    <div class="hero-copy">
+      <h1>${esc(label('真假馆', 'FakeHall'))}<br><em>${esc(label('调查档案', 'Investigation Archive'))}</em></h1>
+      <p>${esc(label('比对两件展品，查阅公开来源，提交你的密封选票。', 'Compare two exhibits, examine the public record, and cast a sealed ballot.'))}</p>
+      <div class="hero-actions">
+        ${featured ? `<a class="action-link primary" data-case-link href="${esc(caseUrl(featured.round_id))}">${esc(label('查看示范案件', 'Open the featured case'))} <span aria-hidden="true">↗</span></a>` : ''}
+        <button id="lobbyCreate">${esc(label('创建案件', 'Create a case'))}</button>
+      </div>
+    </div>
+    <figure class="hero-object">
+      ${media(featured?.item_a?.image_url ?? SEEDS[0].item_a.image_url, featured?.item_a?.title ?? SEEDS[0].item_a.title)}
+      <figcaption>${esc(featured?.item_a?.title ?? SEEDS[0].item_a.title)}</figcaption>
+    </figure>
+  </section>
+  <section class="case-index" aria-labelledby="caseIndexTitle">
+    <div class="section-heading"><h2 id="caseIndexTitle">${esc(label('案件索引', 'Case index'))}</h2><span>${cases.length} ${esc(label('个链上案件', 'on-chain cases'))}</span></div>
+    <div class="case-filters" role="group" aria-label="${esc(label('案件筛选', 'Filter cases'))}">
+      ${Object.entries(names).filter(([key]) => key !== 'inactive').map(([key, name]) =>
+        `<button data-filter="${key}" aria-pressed="${state.filter === key}">${esc(name)}</button>`).join('')}
+    </div>
+    <div class="case-cards">
+      ${cards.map((r) => `<a class="case-card" data-case-link href="${esc(caseUrl(r.round_id))}">
+        ${media(r.item_a.image_url)}
+        <div class="card-copy"><span class="case-meta">#${r.round_id} <span data-stage="${caseStage(r.status)}">${esc(names[caseStage(r.status)])}</span></span>
+        <h3>${esc(r.theme)}</h3><span class="card-arrow" aria-hidden="true">↗</span></div>
+      </a>`).join('')}
+    </div>
+    ${cards.length ? '' : `<p class="index-empty">${esc(state.reading || !state.deployment ? label('正在读取案件…', 'Reading cases…') : state.readbackError ? label('暂时无法读取案件。请重新同步。', 'Cases could not be loaded. Refresh to try again.') : label('此状态下暂无案件。', 'No cases in this category.'))}</p>`}
+  </section>`;
+}
+
+function showSources() {
+  const r = liveRound(state.roundId);
+  if (!r) return;
+  $('#sourceDialog button').setAttribute('aria-label', label('关闭', 'Close'));
+  const urls = [['anchor.primary_source', r.source_url], ['anchor.backup_source', r.backup_source_url]];
+  $('#sourceContent').innerHTML = `<h2 id="sourceTitle">${esc(label('来源档案', 'Source record'))}</h2>
+    ${r.source_quote ? `<blockquote>${esc(r.source_quote)}</blockquote>` : `<p>${esc(label('裁决后会在这里显示验证者提取的引用。', 'The validators’ excerpt appears here after judgment.'))}</p>`}
+    ${r.audit_summary ? `<p>${esc(r.audit_summary)}</p>` : ''}
+    <ul>${urls.filter(([, url]) => httpsUrl(url)).map(([name, url]) =>
+      `<li><a href="${esc(httpsUrl(url))}" target="_blank" rel="noreferrer">${esc(t(name))} ↗</a></li>`).join('')}</ul>`;
+  $('#sourceDialog').showModal();
+}
+
+function countdown() {
+  const el = $('#revealClock');
+  if (!el) return;
+  const seconds = timeRemaining(el.dateTime);
+  if (seconds > 0) {
+    el.textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+    return;
+  }
+  el.textContent = label('揭示已截止', 'Reveal closed');
+  if (!state.writing && $('#revealBallotBtn')) renderAll();
+  const r = liveRound(state.roundId);
+  if (!state.writing && r && r.status === 'BALLOT_REVEAL') {
+    if ($('#closeBtn')) $('#closeBtn').disabled = !state.wallet;
+    if ($('#resolveBtn')) $('#resolveBtn').disabled = !state.wallet || !(state.wallet.address === r.forger_address || r.investigations.some((row) => row.detective === state.wallet.address));
+  }
+}
+
 // ---------- workbench ----------
 function exhibitHtml(side, item, r, live, loupe) {
   const dims = [
@@ -300,14 +380,20 @@ function exhibitHtml(side, item, r, live, loupe) {
       <div class="dim-label">${esc(t(labelKey))}${diff ? ' ◈' : ''}</div>
       <div class="dim-val">${esc(val)}</div></div>`;
   }).join('');
-  return `<div class="exhibit"><h3>${side === 'A' ? esc(t('ui.exhibit_a')) : esc(t('ui.exhibit_b'))} ${stampFor(side, r, live)}</h3>
-    <div class="imgbox"><img src="${esc(item.image_url)}" alt="${esc(item.title)}" loading="lazy" onerror="this.outerHTML='<div class=img-fallback>${esc(t('ui.img_unreachable'))}<br><span class=hash>${esc(item.image_url)}</span></div>'"></div>
+  return `<div class="exhibit" data-side="${side}"><h3>${side === 'A' ? esc(t('ui.exhibit_a')) : esc(t('ui.exhibit_b'))} ${stampFor(side, r, live)}</h3>
+    ${media(item.image_url, item.title)}
     <div class="dim-row"><div class="dim-label">Title</div><div class="dim-val"><strong>${esc(item.title)}</strong></div></div>
     ${rows}</div>`;
 }
 
 function workbenchHtml() {
   const id = state.roundId;
+  if (!liveRound(id)) {
+    const message = state.reading || !state.deployment ? label('正在读取案件…', 'Reading case…')
+      : state.readbackError ? label('暂时无法读回案件。', 'Could not read the case.')
+      : label('没有找到这个链上案件。', 'This on-chain case was not found.');
+    return `<section class="panel empty-case"><h1>${esc(message)}</h1><button id="allCases">${esc(label('返回案件大厅', 'Back to cases'))}</button></section>`;
+  }
   const r = roundData(id);
   const live = isLive(id);
   const seed = previewRound(id);
@@ -319,6 +405,11 @@ function workbenchHtml() {
   const commitCount = Object.keys(commitments).length;
   const committed = w && Object.hasOwn(commitments, w.address);
   const deadlinePassed = Date.now() >= Date.parse(r.reveal_deadline);
+  const draft = state.voteDrafts.get(id);
+  let ballotSaved = false;
+  if (w && sealedBallots) {
+    try { ballotSaved = !!localStorage.getItem(ballotKey(id, w.address)); } catch { /* unavailable */ }
+  }
   const canLock = w && (isForger || commitCount === r.max_detectives);
   const canJudge = w && (r.vote_count === commitCount || deadlinePassed);
   const canClose = r.status === 'VOTING' && (r.vote_count || 0) >= 1 && (isForger || (r.vote_count || 0) >= (r.max_detectives || 3));
@@ -348,19 +439,17 @@ function workbenchHtml() {
 
   // Actions per state machine + permissions
   let actions = '';
-  if (live && (r.status === 'OPEN' || r.status === 'VOTING')) {
+  if (live && w && !isForger && !committed && !voted && (r.status === 'OPEN' || r.status === 'VOTING')) {
     const voteDisabled = !live || !w || isForger || (sealedBallots ? committed || commitCount >= r.max_detectives
       : voted || r.vote_count >= r.max_detectives);
     const voteLabel = sealedBallots ? label('提交投票承诺', 'Commit ballot') : t('action.submit_judgment');
     actions += `<h3>1 · ${esc(voteLabel)}</h3>
-      ${isForger ? `<div class="notice">${esc(t('ui.self_vote_block'))}</div>` : ''}
-      ${(sealedBallots ? committed : voted) ? `<div class="notice">${esc(t('ui.already_voted'))}</div>` : ''}
-      <label><input type="radio" name="voteChoice" value="FAKE_A" style="width:auto"> ${esc(t('action.vote_fake_a'))}</label>
-      <label><input type="radio" name="voteChoice" value="FAKE_B" style="width:auto"> ${esc(t('action.vote_fake_b'))}</label>
+      <label><input type="radio" name="voteChoice" value="FAKE_A" ${draft?.choice === 'FAKE_A' ? 'checked' : ''}> ${esc(t('action.vote_fake_a'))}</label>
+      <label><input type="radio" name="voteChoice" value="FAKE_B" ${draft?.choice === 'FAKE_B' ? 'checked' : ''}> ${esc(t('action.vote_fake_b'))}</label>
       <label>${esc(t('ui.flaw_label'))}</label>
-      <select id="voteFlaw"><option>DATE_MISMATCH</option><option>MATERIAL_MISMATCH</option><option>PROVENANCE_MISMATCH</option><option>FACT_FABRICATION</option></select>
+      <select id="voteFlaw">${['DATE_MISMATCH', 'MATERIAL_MISMATCH', 'PROVENANCE_MISMATCH', 'FACT_FABRICATION'].map((flaw) => `<option value="${flaw}" ${draft?.flaw === flaw ? 'selected' : ''}>${esc(t('flaw.'+flaw))}</option>`).join('')}</select>
       <label>${esc(t('ui.note_label'))}</label>
-      <input id="voteNote" maxlength="280" placeholder="e.g. Source says Bouchard found it in Rosetta in 1799">
+      <textarea id="voteNote" maxlength="280" rows="3" placeholder="${esc(label('记录你发现的证据', 'Write the evidence you found'))}">${esc(draft?.note ?? '')}</textarea>
       <p><button id="voteBtn" class="primary" ${voteDisabled ? 'disabled' : ''}>${esc(voteLabel)}</button>
       ${!w ? `<span class="muted small"> — ${esc(t('ui.no_wallet'))}</span>` : ''}</p>`;
   }
@@ -371,11 +460,11 @@ function workbenchHtml() {
   if (sealedBallots && r.status === 'BALLOT_REVEAL') {
     actions += `<h3>${esc(label('揭示选票', 'Reveal ballots'))}</h3>
       <p>${esc(label('已揭示', 'Revealed'))} ${r.vote_count}/${commitCount} ·
-      <time datetime="${esc(r.reveal_deadline)}">${esc(new Date(r.reveal_deadline).toLocaleString())}</time></p>
-      ${committed && !voted && !deadlinePassed ? `<p><button id="revealBallotBtn" class="primary">${esc(label('揭示我的选票', 'Reveal my ballot'))}</button></p>` : ''}
+      <time id="revealClock" datetime="${esc(r.reveal_deadline)}" title="${esc(new Date(r.reveal_deadline).toLocaleString())}"></time></p>
+      ${committed && !voted && !deadlinePassed ? `<p><button id="revealBallotBtn" class="primary" ${ballotSaved ? '' : 'disabled'}>${esc(label('揭示我的选票', 'Reveal my ballot'))}</button></p>` : ''}
       <p><button id="closeBtn" class="amber" ${canJudge ? '' : 'disabled'}>${esc(t('action.close_and_judge'))}</button>
       <button id="resolveBtn" ${canJudge && (voted || isForger) ? '' : 'disabled'}>${esc(t('ui.resolve_unreachable'))}</button></p>
-      <p class="muted small">${esc(label('全部揭示后即可裁决。到期未揭示的选票不计分。到期后请刷新。', 'Judging opens after all ballots are revealed or the deadline passes. Unrevealed ballots do not score. Refresh after the deadline.'))}</p>`;
+      <p class="muted small">${esc(label('全部揭示后即可裁决。到期未揭示的选票不计分。', 'Judging opens after all ballots are revealed or the deadline passes. Unrevealed ballots do not score.'))}</p>`;
   }
   if (live && !sealedBallots && r.status === 'VOTING') {
     actions += `<h3>2 · close_and_judge</h3>${r2note}
@@ -412,7 +501,8 @@ function workbenchHtml() {
   }
 
   if (sealedBallots && w && !voted && !isForger && (committed || r.status === 'OPEN' || r.status === 'VOTING')) {
-    actions += `<p><button id="backupBallotBtn">${esc(label('下载选票备份', 'Download ballot backup'))}</button>
+    actions += `${committed ? `<p class="ballot-slip">${esc(ballotSaved ? label('已封存 · 本机可以恢复选票', 'Sealed · Ballot available on this device') : label('已封存 · 请导入本局选票备份', 'Sealed · Restore this ballot from backup'))}</p>` : ''}
+      <p><button id="backupBallotBtn" ${ballotSaved ? '' : 'disabled'}>${esc(label('下载选票备份', 'Download ballot backup'))}</button>
       <label>${esc(label('从文件恢复选票', 'Restore ballot from file'))}<input id="importBallot" type="file" accept=".json,application/json"></label></p>
       <p class="muted small">${esc(label('请在揭示前保密备份文件，并用原投票钱包揭示。', 'Keep the backup private until reveal and reveal using the original signer.'))}</p>`;
   }
@@ -421,53 +511,62 @@ function workbenchHtml() {
   // set by readRound itself. Preview seeds never carry it.
   const snap = liveRound(id);
   const exportOk = !!(snap && snap.is_finalized_readback && ['JUDGED', 'REVEALED'].includes(snap.status));
-  const txHtml = state.tx ? txPipelineHtml() : '';
+  const txHtml = state.tx?.roundId === id ? txPipelineHtml() : '';
 
   return `
-  <div class="panel"><div style="display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:baseline">
-    <h2 style="margin:0">CASE #${String(id).padStart(2, '0')} · ${esc(r.theme || seed?.theme)}</h2>
-    <span class="stamp ${r.status === 'REVEALED' || r.status === 'JUDGED' ? 'real' : 'sealed'}">${esc(live ? t('status.' + r.status) : t('status.PREVIEW_SEED'))}</span>
-    ${live ? '' : `<span class="sealed-tag">${esc(t('status.PREVIEW_SEED'))}</span>`}
-  </div>
-  <dl class="kv" style="margin-top:.6rem">
-    <dt>${esc(t('anchor.primary_source'))}</dt><dd><a href="${esc(r.source_url)}" target="_blank" rel="noreferrer">${esc(r.source_url)}</a></dd>
-    <dt>${esc(t('anchor.backup_source'))}</dt><dd><a href="${esc(r.backup_source_url)}" target="_blank" rel="noreferrer">${esc(r.backup_source_url)}</a></dd>
-    <dt>${esc(t('ui.forger'))}</dt><dd class="mono">${esc(r.forger_address || '')}</dd>
-    <dt>${esc(t('anchor.commitment_hash'))}</dt><dd class="hash">${esc(r.commitment_hash || '')}</dd>
-    <dt>max_detectives</dt><dd>${esc(r.max_detectives)} · ${esc(r.vote_count || 0)} ${esc(t('ui.votes'))}</dd>
-  </dl></div>
+  <div class="case-toolbar"><button id="allCases">← ${esc(label('全部案件', 'All cases'))}</button>
+    <div><button id="openSources">${esc(label('来源档案', 'Source record'))}</button>
+    <button id="shareCase">${esc(label('分享案件', 'Share case'))} ↗</button></div>
+    <output id="shareStatus" role="status"></output></div>
+  <section class="case-heading">
+    <p class="case-meta">#${String(id).padStart(2, '0')} <span data-stage="${caseStage(r.status)}">${esc(filterNames()[caseStage(r.status)])}</span></p>
+    <h1>${esc(r.theme || seed?.theme)}</h1>
+    <ol class="case-steps">${[label('提交承诺', 'Commit'), label('揭示选票', 'Reveal'), label('共识裁决', 'Judge'), label('结案归档', 'Archive')].map((step, i) => {
+      const current = ({ OPEN: 0, VOTING: 0, BALLOT_REVEAL: 1, JUDGED: 2, REVEALED: 3 })[r.status];
+      return `<li ${i === current ? 'aria-current="step"' : ''} data-complete="${i < current || r.status === 'REVEALED'}"><span aria-hidden="true">${i + 1}</span>${esc(step)}</li>`;
+    }).join('')}</ol>
+  </section>
   ${verdictBanner(r, live)}
   <div class="workbench">
     <div>
       <div class="panel">
         <div class="compare-bar" role="group" aria-label="loupe">${loupeBtns}</div>
-        <div class="comparison-grid" data-loupe-active="${loupe !== 'all'}" id="compareGrid">
+        <div class="side-toggle" role="group" aria-label="${esc(label('切换展品', 'Switch exhibit'))}">
+          ${['A','B'].map((side) => `<button data-side-toggle="${side}" aria-pressed="${side === state.mobileSide}">${esc(t(side === 'A' ? 'ui.exhibit_a' : 'ui.exhibit_b'))}</button>`).join('')}</div>
+        <div class="comparison-grid" data-loupe-active="${loupe !== 'all'}" data-mobile-side="${state.mobileSide}" id="compareGrid">
           ${exhibitHtml('A', r.item_a, r, live, loupe)}
           ${exhibitHtml('B', r.item_b, r, live, loupe)}
         </div>
-        <p class="small muted">${esc(t('anchor.source_excerpt'))}: ${live ? `“${esc(r.source_quote || '')}”` : esc(t('status.UNCONFIRMED'))}</p>
+
       </div>
       ${txHtml}
     </div>
-    <div>
-      <div class="panel"><h3>🕵️ ${esc(t('ui.detectives'))} — ${esc(r.vote_count || 0)}/${esc(r.max_detectives || 3)}</h3>${board}
+    <div class="case-sidebar">
+      <div class="panel ballot-board"><h3> ${esc(t('ui.detectives'))} — ${esc(r.vote_count || 0)}/${esc(r.max_detectives || 3)}</h3>${board}
         <dl class="kv"><dt>${esc(t('ui.forger'))}</dt><dd class="score">${pts(r.forger_points, live)}</dd></dl>
       </div>
-      <div class="panel">${actions}
+      <div class="panel action-panel" id="caseActions">
+        <h3>${esc(isForger ? label('造假者工作台', 'Forger desk') : w ? label('侦探工作台', 'Detective desk') : label('旁观者视图', 'Observer view'))}</h3>
+        ${!w && !exportOk ? `<p class="muted">${esc(label('连接钱包后可以参与该案。', 'Connect a wallet to participate.'))}</p><button id="caseConnect">${esc(label('连接钱包', 'Connect wallet'))}</button>` : ''}
+        ${actions}
         <hr style="border-color:var(--border-hairline)">
         <p><button id="exportBtn" ${exportOk ? '' : 'disabled'}>${esc(t('action.export_dossier'))}</button>
         ${exportOk ? '' : `<span class="small muted"> ${esc(t('ui.export_blocked'))}</span>`}</p>
         <p class="small muted">${esc(sealedBallots ? label('承诺 → 锁定 → 揭示 → 裁决', 'Commit → Lock → Reveal → Judge') : t('ui.full_loop_hint'))}</p>
       </div>
     </div>
-  </div>`;
+  </div>
+  ${sealedBallots && id === milestoneEvidence.readbacks.final.round_id && exportOk ?
+    `<details class="panel case-receipts"><summary>${esc(label('结案交易证据', 'Case transaction evidence'))}</summary>
+      ${['commit_one', 'commit_two', 'lock', 'reveal_one', 'settle', 'archive'].map((key) =>
+        `<a href="${esc(explorerTx(milestoneEvidence.transactions[key].hash))}" target="_blank" rel="noreferrer">${esc(key.replaceAll('_', ' '))} ↗</a>`).join('')}</details>` : ''}`;
 }
 
 function txPipelineHtml() {
   const tx = state.tx;
-  const steps = [t('ui.step_broadcast'), t('ui.step_fetch'), t('ui.step_compare'), t('ui.step_finalized')];
+  const steps = [label('等待签名', 'Awaiting signature'), label('已广播', 'Broadcast'), label('收据已最终确认', 'Receipt finalized'), label('已读回链上状态', 'State read back')];
   const lis = steps.map((s, i) => {
-    const cls = i < tx.phase ? 'done' : (i === tx.phase ? 'active' : '');
+    const cls = i < tx.phase || (i === 3 && tx.phase === 3) ? 'done' : (i === tx.phase ? 'active' : '');
     return `<li class="${cls}">${esc(s)}</li>`;
   }).join('');
   let extra = '';
@@ -480,7 +579,7 @@ function txPipelineHtml() {
     extra = `<div class="notice err">${esc(tx.error)}</div>`;
     // R2: a failure BEFORE broadcast (no tx hash yet) gets a visible retry
     // button; after broadcast the resume-hash control below is the retry.
-    if (!tx.hash) extra += `<p><button id="retryWriteBtn" class="amber">${esc(t('ui.retry_write'))}</button></p>`;
+    if (!tx.hash && tx.retry) extra += `<p><button id="retryWriteBtn" class="amber">${esc(t('ui.retry_write'))}</button></p>`;
   }
   return `<div class="panel"><h3>${esc(t('ui.close_steps'))} — ${esc(tx.method)} (attempt ${tx.attempts})</h3>
     <ul class="pipeline">${lis}</ul>
@@ -604,21 +703,59 @@ function evidenceHtml() {
 function renderAll() {
   renderChrome();
   const v = $('#view');
-  if (state.view === 'workbench') v.innerHTML = workbenchHtml();
+  if (state.view === 'lobby') v.innerHTML = lobbyHtml();
+  else if (state.view === 'workbench') v.innerHTML = workbenchHtml();
   else if (state.view === 'gallery') v.innerHTML = galleryHtml();
   else if (state.view === 'leaderboards') v.innerHTML = leaderboardsHtml();
   else v.innerHTML = evidenceHtml();
   bindViewActions();
+  countdown();
   bindDrawerActions();
   if (state.writing) v.querySelectorAll('button, input, select').forEach((el) => { el.disabled = true; });
 }
 
 function bindViewActions() {
-  document.querySelectorAll('[data-loupe]').forEach((b) => { b.onclick = () => { state.loupe = b.dataset.loupe; renderAll(); }; });
-  document.querySelectorAll('[data-goto-round]').forEach((b) => {
-    b.onclick = () => { state.roundId = Number(b.dataset.gotoRound); state.view = 'workbench'; renderAll(); window.scrollTo(0, 0); };
-  });
+  document.querySelectorAll('[data-loupe]').forEach((b) => { b.onclick = () => {
+    state.loupe = b.dataset.loupe;
+    renderAll();
+    document.querySelector(`[data-loupe="${state.loupe}"]`)?.focus();
+  }; });
+  document.querySelectorAll('[data-side-toggle]').forEach((b) => { b.onclick = () => {
+    state.mobileSide = b.dataset.sideToggle;
+    $('#compareGrid').dataset.mobileSide = state.mobileSide;
+    document.querySelectorAll('[data-side-toggle]').forEach((button) => button.setAttribute('aria-pressed', button === b));
+  }; });
+  document.querySelectorAll('[data-filter]').forEach((b) => { b.onclick = () => {
+    state.filter = b.dataset.filter;
+    renderAll();
+    document.querySelector(`[data-filter="${state.filter}"]`)?.focus();
+  }; });
+  document.querySelectorAll('[data-goto-round]').forEach((b) => { b.onclick = () => navigate('workbench', Number(b.dataset.gotoRound)); });
+  document.querySelectorAll('[data-case-link]').forEach((link) => { link.onclick = (event) => {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    navigate('workbench', caseRoute(link.href));
+  }; });
   const on = (id, fn) => { const el = $(id); if (el) el.onclick = fn; };
+  on('#allCases', () => navigate('lobby'));
+  on('#caseConnect', () => $('#connectBtn')?.click());
+  on('#openSources', showSources);
+  on('#lobbyCreate', () => $('#studioBtn').click());
+  on('#shareCase', async () => {
+    const url = caseUrl(state.roundId).href;
+    const output = $('#shareStatus');
+    try {
+      await navigator.clipboard.writeText(url);
+      output.textContent = label('案件链接已复制', 'Case link copied');
+    } catch {
+      output.textContent = url;
+    }
+  });
+  const recordDraft = () => state.voteDrafts.set(state.roundId, {
+    choice: document.querySelector('[name="voteChoice"]:checked')?.value,
+    flaw: $('#voteFlaw')?.value, note: $('#voteNote')?.value,
+  });
+  document.querySelectorAll('[name="voteChoice"], #voteFlaw, #voteNote').forEach((el) => { el.oninput = recordDraft; });
   on('#voteBtn', doVote);
   on('#lockBallotsBtn', () => doSimple('open_ballot_reveal', [state.roundId]));
   on('#revealBallotBtn', revealBallot);
@@ -698,12 +835,16 @@ async function runWrite(method, args, roundId, { after } = {}) {
     retry: () => runWrite(method, args, roundId, { after }) };
   renderAll();
   try {
+    if (w.mode === 'injected') {
+      const accounts = await w.provider.request({ method: 'eth_accounts' });
+      if (accounts[0]?.toLowerCase() !== w.address || Number(await w.provider.request({ method: 'eth_chainId' })) !== CHAIN_ID) {
+        throw new Error(label('请重新连接原钱包并切换至 Studionet。', 'Reconnect the original signer on Studionet.'));
+      }
+    }
     const hash = await w.client.writeContract({ address: contractAddress(), functionName: method, args, value: 0n, leaderOnly: false });
     state.tx.hash = hash; state.tx.phase = 1; renderAll();
-    const tick = setInterval(() => { if (state.tx && state.tx.phase < 3) { state.tx.phase += 1; const el = document.querySelector('.pipeline'); if (el) renderAll(); } }, 20000);
-    let receipt;
-    try { receipt = await waitFinalized(hash); } finally { clearInterval(tick); }
-    state.tx.phase = 3; renderAll();
+    const receipt = await waitFinalized(hash);
+    state.tx.phase = 2; renderAll();
     const exec = leaderExecution(receipt);
     const payload = leaderPayload(receipt);
     if (exec !== 'SUCCESS' || ![6, 'MAJORITY_AGREE'].includes(receipt.result)) {
@@ -712,8 +853,10 @@ async function runWrite(method, args, roundId, { after } = {}) {
       renderAll();
       return;
     }
-    state.tx = null;
     if (after) after();
+    const snap = await readRound(roundId);
+    state.liveRounds = [...(state.liveRounds ?? []).filter((row) => row.round_id !== roundId), snap];
+    state.tx.phase = 3;
     await refreshLive();
   } catch (e) {
     if (state.tx) state.tx.error = String(e?.shortMessage || e?.message || e).slice(0, 300);
@@ -850,19 +993,32 @@ async function doSimple(method, args) {
 }
 async function doResume() {
   const hash = $('#resumeHash')?.value.trim();
-  if (!hash) return;
-  state.tx = { method: 'resume', roundId: state.roundId, hash, phase: 3, attempts: 1, error: null };
+  if (!/^0x[0-9a-f]{64}$/i.test(hash ?? '') || state.writing) return;
+  state.writing = true;
+  state.tx = { method: 'resume', roundId: state.roundId, hash, phase: 1, attempts: 1, error: null };
   renderAll();
   try {
     const receipt = await waitFinalized(hash);
     const exec = leaderExecution(receipt);
-    if (exec === 'ERROR' && leaderPayload(receipt).includes('SOURCE_OR_IMAGE_UNREACHABLE_FAIL_CLOSED')) {
-      state.tx.error = 'FAIL_CLOSED'; renderAll(); return;
+    state.tx.phase = 2;
+    const tx = await reader.getTransaction({ hash });
+    if (tx.to_address?.toLowerCase() !== contractAddress().toLowerCase()) {
+      throw new Error(label('该交易不属于本合约。', 'This transaction is for a different contract.'));
     }
-    state.tx = null;
+    if (exec !== 'SUCCESS' || ![6, 'MAJORITY_AGREE'].includes(receipt.result)) {
+      const payload = leaderPayload(receipt);
+      state.tx.error = payload.includes('SOURCE_OR_IMAGE_UNREACHABLE_FAIL_CLOSED') ? 'FAIL_CLOSED' : payload || label('交易未成功', 'Transaction failed');
+      renderAll();
+      return;
+    }
+    const snap = await readRound(state.tx.roundId);
+    state.liveRounds = [...(state.liveRounds ?? []).filter((row) => row.round_id !== snap.round_id), snap];
+    state.tx.phase = 3;
     await refreshLive();
   } catch (e) {
     state.tx.error = String(e?.shortMessage || e?.message || e).slice(0, 300);
+  } finally {
+    state.writing = false;
     renderAll();
   }
 }
@@ -875,6 +1031,8 @@ function doExport() {
     return;
   }
   const ev = snap.ballot_commitments ? null : EVIDENCE.rounds[state.roundId];
+  const milestoneTx = snap.ballot_commitments && state.roundId === milestoneEvidence.readbacks.final.round_id
+    ? Object.entries(milestoneEvidence.transactions).map(([label, step]) => ({ label, hash: step.hash, explorer: explorerTx(step.hash) })) : [];
   const dossier = {
     project: 'FakeHall',
     network: 'Stable Studionet',
@@ -883,6 +1041,7 @@ function doExport() {
     explorer: explorerAddress(contractAddress()),
     round_id: state.roundId,
     is_finalized_readback: snap.is_finalized_readback,
+    share_url: caseUrl(snap.round_id).href,
     status: snap.status,
     verdict: snap.verdict,
     flaw_category: snap.flaw_category,
@@ -890,10 +1049,11 @@ function doExport() {
     allocation_points: snap.verdict === 'VOID' ? 0 : snap.forger_points,
     forger_points_awarded: snap.forger_points,
     votes: snap.investigations,
+    unrevealed: Object.keys(snap.ballot_commitments ?? {}).filter((address) => !snap.investigations.some((row) => row.detective === address)),
     source_quote: snap.source_quote,
     audit_summary: snap.audit_summary,
     readback: snap,
-    evidence_tx_hashes: ev ? ev.steps.filter((s) => s.hash).map((s) => ({ label: s.label, hash: s.hash, explorer: explorerTx(s.hash) })) : [],
+    evidence_tx_hashes: ev ? ev.steps.filter((s) => s.hash).map((s) => ({ label: s.label, hash: s.hash, explorer: explorerTx(s.hash) })) : milestoneTx,
     signer_mode: state.wallet ? state.wallet.signer_mode : 'READ_ONLY',
     tx_sender: state.wallet ? state.wallet.address : null,
     exported_at: new Date().toISOString(),
@@ -922,7 +1082,7 @@ function studioHtml() {
       <div><h3>${esc(t('ui.exhibit_b'))}</h3>${itemFields('b')}</div>
     </div>
     <h3>Commit-Reveal — ${esc(t('anchor.commitment_hash'))}</h3>
-    <label><input type="radio" name="fakeChoice" value="FAKE_A" style="width:auto"> FAKE_A</label>
+    <label><input type="radio" name="fakeChoice" value="FAKE_A" ${draft?.choice === 'FAKE_A' ? 'checked' : ''}> FAKE_A</label>
     <label><input type="radio" name="fakeChoice" value="FAKE_B" checked style="width:auto"> FAKE_B</label>
     <label>Salt *</label><input id="fSalt" placeholder="e.g. rosetta_bouchard_1799_salt">
     <p><button id="fGenSalt">${esc(t('ui.salt_random'))}</button> <button id="fDlSalt">${esc(t('ui.salt_download'))}</button></p>
@@ -1057,7 +1217,7 @@ async function doCreate() {
     $('#studioDrawer').hidden = true;
     state.view = 'workbench';
     await runWrite('create_round', [theme, JSON.stringify(a), JSON.stringify(b), src, backup, hash, maxDet], rid, {
-      after: () => { state.roundId = rid; },
+      after: () => navigate('workbench', rid),
     });
     state.roundId = rid;
     renderAll();
@@ -1074,7 +1234,12 @@ async function doCreate() {
 // ---------- static wiring ----------
 document.addEventListener('DOMContentLoaded', () => {
   document.body.insertAdjacentHTML('beforeend', studioHtml());
-  $('#langBtn').onclick = () => { state.lang = state.lang === 'zh' ? 'en' : 'zh'; renderAll(); };
+  try { if (localStorage.getItem('fakehall-language') === 'en') state.lang = 'en'; } catch { /* unavailable */ }
+  $('#langBtn').onclick = () => {
+    state.lang = state.lang === 'zh' ? 'en' : 'zh';
+    try { localStorage.setItem('fakehall-language', state.lang); } catch { /* unavailable */ }
+    renderAll();
+  };
   $('#motionBtn').onclick = () => {
     state.staticMode = !state.staticMode;
     document.documentElement.dataset.static = state.staticMode ? 'true' : 'false';
@@ -1084,7 +1249,14 @@ document.addEventListener('DOMContentLoaded', () => {
     history.replaceState(null, '', u);
     renderChrome();
   };
-  document.querySelectorAll('[data-nav]').forEach((b) => { b.onclick = () => { state.view = b.dataset.nav; renderAll(); window.scrollTo(0, 0); }; });
+  document.querySelectorAll('[data-nav]').forEach((b) => { b.onclick = () => navigate(b.dataset.nav); });
+  $('#brandHome').onclick = (event) => { event.preventDefault(); navigate('lobby'); };
+  window.addEventListener('popstate', () => {
+    state.roundId = caseRoute() ?? 1;
+    state.view = caseRoute() ? 'workbench' : 'lobby';
+    renderAll();
+  });
+  setInterval(countdown, 1000);
   $('#studioBtn').onclick = () => { const d = $('#studioDrawer'); d.hidden = false; bindDrawerActions(); };
   boot();
 });

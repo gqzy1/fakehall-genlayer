@@ -38,3 +38,9 @@ Run `npm ci`, `npm test` and `npm run build` from the repository root. Run `npm 
 ## Submission copy
 
 FakeHall now implements sealed detective ballots on GenLayer. Previously, the detective’s selection was visible in transaction calldata before the round was judged. The new contract locks salted, round- and wallet-bound commitments before any reveal. It verifies each reveal deterministically and can settle after the deadline even if a detective does not return. The update includes a signer-bound browser backup and restore flow, a new Stable Studionet deployment, and a read-only verification script.
+
+## Investigation Archive front end
+
+The [live archive](https://gqzy1.github.io/fakehall-genlayer/milestone/) adds case filters, direct case URLs, desktop and mobile exhibit comparison, a source drawer, and a wallet-aware ballot desk. Confirmed cases retain a shareable URL as they move from commitment to archival. The reference case includes a receipt list and exportable dossier. The interface uses the current sealed-ballot contract and existing chain state.
+
+On desktop or mobile, open [Case #1](https://gqzy1.github.io/fakehall-genlayer/milestone/?case=1) to compare the exhibits, open the source record, and view the finalized verdict and ballot results. For in-progress cases, the browser displays the reveal deadline, recovers backups only if they match the connected wallet’s commitment, and updates transaction progress from actual receipts and readbacks.
